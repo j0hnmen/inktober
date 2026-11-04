@@ -434,7 +434,8 @@ html.neg .viewer.mys .vcard .f,html.neg .viewer.mys .vcard .b,html.neg .viewer .
 .room.walldone .reset.gal{display:none}
 /* the gallery button: a small notebook that comes apart into a grid on hover (a grid straight away on a phone) */
 .reset.gal{border:0;padding:0;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;color:#b9b3a7;background:rgba(255,255,255,.025);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 6px 16px rgba(0,0,0,.25)}   /* the same plain round button as the mute one */
-.reset.gal:hover,.reset.gal:focus-visible{color:var(--ink);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4),0 6px 16px rgba(0,0,0,.25)}
+@media (hover:hover){ .reset.gal:hover{color:var(--ink);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4),0 6px 16px rgba(0,0,0,.25)} }   /* phones: no hover look on a tap */
+.reset.gal:focus-visible{color:var(--ink);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4),0 6px 16px rgba(0,0,0,.25)}
 .reset.gal svg{width:26px;height:26px;display:block;overflow:visible}
 .reset.gal svg g,.reset.gal svg rect,.reset.gal svg path{transform-box:fill-box;transform-origin:center}
 .reset.gal{overflow:visible}
@@ -443,7 +444,7 @@ html.neg .viewer.mys .vcard .f,html.neg .viewer.mys .vcard .b,html.neg .viewer .
 .reset.gal svg.tl{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;clip-path:circle(50% at 50% 50%)}   /* the tiles stay inside the disc */
 /* at rest: only the fast-forward arrows. Hover: the sheets appear all round, from the middle out, and the arrows run to the right (in place) */
 .reset.gal .tl rect{opacity:0;transform:scale(.55);transition:opacity .22s ease var(--d,0s), transform .45s cubic-bezier(.2,1.2,.3,1) var(--d,0s)}
-.reset.gal:hover .tl rect,.reset.gal:focus-visible .tl rect{opacity:1;transform:none}
+@media (hover:hover){ .reset.gal:hover .tl rect{opacity:1;transform:none} } .reset.gal:focus-visible .tl rect{opacity:1;transform:none}
 @keyframes ffgo{0%{transform:translateX(-3px);opacity:0}30%{opacity:1}70%{opacity:1}100%{transform:translateX(3px);opacity:0}}
 @media (hover:hover) and (min-width:601px){ .reset.gal:hover .tl .ff,.reset.gal:focus-visible .tl .ff{animation:ffgo .85s linear infinite} .reset.gal:hover .tl .ff.b,.reset.gal:focus-visible .tl .ff.b{animation-delay:.14s} }
 @media (max-width:600px){ .reset.gal{width:40px;height:40px;right:max(16px, env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 16px)} }   /* phones: the hover look, still */
@@ -556,6 +557,8 @@ html.neg .viewer .vcap b{color:#151515} html.neg .viewer .vcap span{color:#4a474
 html.mcur,html.mcur *,html.mcur *::before,html.mcur *::after{cursor:none !important}
 .cur{position:fixed;left:0;top:0;z-index:3000;width:64px;height:64px;pointer-events:none;opacity:0;transition:opacity .25s ease;will-change:transform;contain:layout style}   /* its own layer: moving it never repaints the page */
 .cur.on{opacity:1}
+html.vzoomed .cur{opacity:0 !important;transition:opacity .15s ease}
+.room.zn .slot,.room.zn .slot img{transition:none !important}   /* the gallery re-laid out under a pinch: at once, the wall itself eases */   /* zooming into a drawing: the hand goes, the drawing stays clear */
 .cur i{position:absolute;left:0;top:0;width:64px;height:64px;background:url(pages/cur.webp) 0 0/640px 64px no-repeat;opacity:0;transition:opacity .14s ease}
 .cur i.on{opacity:1}
 .cur i{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4)) drop-shadow(0 2px 5px rgba(0,0,0,.22))}
@@ -1844,6 +1847,7 @@ V.card.addEventListener("pointerdown",e=>{ if(vOpen&&vDay==="10"&&e.pointerType!
 addEventListener("pointerup",e=>{ if(vOpen&&vDay==="10"&&e.pointerType!=="mouse"&&!V.el.classList.contains("mking")) flicker([[0,false]]); });
 /* pinch / ctrl+wheel zoom on a flat full-resolution copy; it eases back on release */
 const vPts=new Map(); let vPinch=null, vZooming=false, vZ=1, vPX=0, vPY=0, vZanim=0;
+new MutationObserver(()=>document.documentElement.classList.toggle("vzoomed",!V.zoom.hidden)).observe(V.zoom,{attributes:true,attributeFilter:["hidden"]});
 function vApplyZ(){ V.zoom.style.transform=`translate3d(${vPX}px,${vPY}px,0) scale(${vZ})`; }
 /* phones: one scan-resolution picture at a time (memory), fetched once the sheet is open so a pinch finds it ready */
 let zoomHDKey=null, zoomHDP=null, zoomHDImg=null;
@@ -1882,7 +1886,8 @@ function vSnap(){
 }
 V.stage.addEventListener("pointerdown",e=>{
   vPts.set(e.pointerId,[e.clientX,e.clientY]);
-  if(vPts.size===2){ const [a,b]=[...vPts.values()]; vStartZoom(); vPinch={d0:Math.hypot(a[0]-b[0],a[1]-b[1])||1,z0:vZ,c:[(a[0]+b[0])/2,(a[1]+b[1])/2]}; }
+  if(vPts.size===2){ hcStop(); cards.forEach(c=>{ clearTimeout(c.holdT); if(c.drag&&!c.hold){ c.drag=null; c.el.classList.remove("dragging"); } }); window.curPick&&curPick();   /* two fingers: a zoom, never the hold for the reference (the first finger had started it) */
+    const [a,b]=[...vPts.values()]; vStartZoom(); vPinch={d0:Math.hypot(a[0]-b[0],a[1]-b[1])||1,z0:vZ,c:[(a[0]+b[0])/2,(a[1]+b[1])/2]}; }
 },{capture:true});
 V.stage.addEventListener("pointermove",e=>{
   if(!vPts.has(e.pointerId)) return; vPts.set(e.pointerId,[e.clientX,e.clientY]);
@@ -2146,12 +2151,33 @@ if(!COARSE && !reduce){
 }
 /* phone gallery: two fingers spread to zoom in (2 to a row), pinch to zoom out (4 to a row), as the slider does */
 let wPinch=null, wPinchT=0;
-wallgrid.addEventListener("touchstart",e=>{ if(e.touches.length===2 && room.classList.contains("walldone") && innerWidth<600){ const [a,b]=e.touches; wPinch={d0:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)||1,done:false}; } },{passive:true});
-wallgrid.addEventListener("touchmove",e=>{ if(!wPinch||e.touches.length<2) return; e.preventDefault(); if(wPinch.done) return;
-  const [a,b]=e.touches, r=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/wPinch.d0, want= r>1.2 ? 2 : r<0.83 ? 4 : zoomCols;
-  if(want!==zoomCols){ wPinch.done=true; wPinchT=performance.now(); const cy=(a.clientY+b.clientY)/2, k=(wallgrid.scrollTop+cy)/Math.max(1,wallgrid.scrollHeight);
-    zoomCols=want; zoomEl.querySelector("input").value=6-zoomCols; placeWall(); wallPictures(); wallgrid.scrollTop=k*wallgrid.scrollHeight-cy; } },{passive:false});
-wallgrid.addEventListener("touchend",e=>{ if(e.touches.length<2 && wPinch){ wPinch=null; wPinchT=performance.now(); } },{passive:true});
+/* the pinch follows the fingers (the wall scales live around them), then settles on 2 or 4 to a row: the new layout is
+   laid out at once, set to look exactly like the scaled wall, and eased into place — nothing jumps, the drawing under
+   the fingers stays under the fingers */
+wallgrid.addEventListener("touchstart",e=>{ if(e.touches.length===2 && room.classList.contains("walldone") && innerWidth<600){ const [a,b]=e.touches;
+  const wr=wallgrid.getBoundingClientRect(), cx=(a.clientX+b.clientX)/2, cy=(a.clientY+b.clientY)/2;
+  wallgrid.style.transition="none"; wallgrid.style.transformOrigin=`${(cx-wr.left).toFixed(1)}px ${(cy-wr.top).toFixed(1)}px`;
+  wPinch={d0:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)||1,cx,cy,r:1}; } },{passive:true});
+wallgrid.addEventListener("touchmove",e=>{ if(!wPinch||e.touches.length<2) return; e.preventDefault();
+  const [a,b]=e.touches; wPinch.r=Math.max(0.7,Math.min(1.7,Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/wPinch.d0));
+  wallgrid.style.transform=`scale(${wPinch.r.toFixed(4)})`; },{passive:false});
+const wPinchEnd=()=>{ const P=wPinch; wPinch=null; wPinchT=performance.now(); if(!P) return;
+  const want= P.r>1.12 ? 2 : P.r<0.88 ? 4 : zoomCols;
+  if(want===zoomCols){ wallgrid.style.transition="transform .28s cubic-bezier(.2,.8,.25,1)"; wallgrid.style.transform=""; return; }
+  /* the drawing nearest the fingers, where it shows now (with the live scale) */
+  let ref=null, bd=1e9; slots.forEach(sl=>{ if(!sl.dataset.day) return; const q=sl.getBoundingClientRect(), d=Math.hypot(q.left+q.width/2-P.cx,q.top+q.height/2-P.cy); if(d<bd){ bd=d; ref=sl; } });
+  const old=ref.getBoundingClientRect();
+  room.classList.add("zn"); wallgrid.style.transition="none"; wallgrid.style.transform=""; wallgrid.style.transformOrigin="0 0";
+  zoomCols=want; zoomEl.querySelector("input").value=6-zoomCols; placeWall(); wallPictures();
+  /* scroll so that drawing sits where it was, as far as the wall allows */
+  const wr=wallgrid.getBoundingClientRect(); let q=ref.getBoundingClientRect(); wallgrid.scrollTop+=q.top-old.top; q=ref.getBoundingClientRect();
+  const k=old.width/q.width, tx=old.left-wr.left-(q.left-wr.left)*k, ty=old.top-wr.top-(q.top-wr.top)*k;
+  wallgrid.style.transform=`translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${k.toFixed(4)})`;
+  void wallgrid.offsetWidth;
+  wallgrid.style.transition="transform .38s cubic-bezier(.2,.8,.25,1)"; wallgrid.style.transform="";
+  setTimeout(()=>{ room.classList.remove("zn"); if(!wPinch){ wallgrid.style.transition=""; wallgrid.style.transformOrigin=""; } },420); };
+wallgrid.addEventListener("touchend",e=>{ if(e.touches.length<2 && wPinch) wPinchEnd(); },{passive:true});
+wallgrid.addEventListener("touchcancel",()=>{ if(wPinch) wPinchEnd(); },{passive:true});
 wallgrid.addEventListener("click",e=>{
   waveStop(true);
   if(!room.classList.contains("wallive")) return;
@@ -2650,7 +2676,7 @@ if(matchMedia("(hover: hover) and (pointer: fine)").matches){
   const dumbCorner=(x,y)=>{ if(!vOpen||!ROTATE[vDay]||vZooming||M.face!==0||!V.el.classList.contains("ready")) return false;
     const r=V.card.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2, a=-(M.rz||0)*Math.PI/180, dx=x-cx, dy=y-cy;
     const lx=dx*Math.cos(a)-dy*Math.sin(a), ly=dx*Math.sin(a)+dy*Math.cos(a), ex=Math.abs(lx)-vW/2, ey=Math.abs(ly)-vH/2, Z=Math.max(28,Math.min(vW,vH)*0.09);
-    const on=ex>-Z && ey>-Z && ex<Z*1.3 && ey<Z*1.3; if(on){ cur.style.setProperty("--fx",lx<0?-1:1); cur.style.setProperty("--fy",ly>0?-1:1); } return on; };
+    const on=ex>-Z && ey>-Z && ex<Z*1.3 && ey<Z*1.3; if(on){ cur.style.setProperty("--fx",lx<0?-1:1); cur.style.setProperty("--fy",1);   /* left corners mirrored, top and bottom alike */ } return on; };
   const ACT=".vpeek,.vclose,.reset,.snd,.sndmini,.track,#togal,.soc a,.mopk,.gate .gb,button,a,label,input";   /* everything that answers a click: the hover hand */
   let tx=-100, ty=-100, x=-100, y=-100, raf=0, over=null, grab="", need=false;
   const pick=()=>{
@@ -2779,14 +2805,15 @@ function tearLite(){
   let i=0, nxt=ready(days[0]), after=days.length>1?ready(days[1]):Promise.resolve([]), lastFly=Promise.resolve();
   const step=()=>{
     if(tok!==galTok||g!==gen) return;
-    if(i>=days.length && !step.fin){ step.fin=true; lastFly.then(()=>{ if(i>=days.length) step(); }); return; }   /* the last sheet (Flex) finishes its flight before the notebook goes */
-    if(i>=days.length){   /* the notebook is empty: it fades, and the wall takes the screen */
+    const lastD=days[days.length-1], flexEnd= lastD==="31" && !reduce;   /* Flex is not torn off: the notebook goes with it, spinning */
+    if(i>=days.length-(flexEnd?1:0) && !step.fin){ step.fin=true; lastFly.then(()=>{ step(); }); return; }   /* the last sheet torn finishes its flight first */
+    if(i>=days.length-(flexEnd?1:0)){   /* the notebook is left (with Flex on top): it spins away, and the wall takes the screen */
       room.classList.add("headout");
-      pile.remove(); introPile=null;
+      if(!flexEnd){ pile.remove(); introPile=null; }
       /* Flex's end, as on a computer: the notebook spins on itself and shrinks to nothing, then a glint where it was */
       if(!reduce){ const t00=performance.now(); (function f(now){ if(g!==gen) return; const u=Math.min(1,(now-t00)/850), e=u*u*(3-2*u), sc=1-e, rot=540*e*e, y=-40*Math.sin(u*Math.PI);
           bk.style.transform=`translate(0px, ${y.toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(4)})`; bksh.style.transform=`translate(0px, ${(y+20).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(4)})`; bksh.style.opacity=(0.5*(1-e)*(1-e)).toFixed(3);
-          if(u<1) requestAnimationFrame(f); else glint(); })(t00); }
+          if(u<1) requestAnimationFrame(f); else { glint(); if(flexEnd){ pile.remove(); introPile=null; reveal(lastD,g); } } })(t00); }
       else { book.style.setProperty("--gone","opacity .5s ease"); book.classList.add("gone"); }
       setTimeout(()=>{ if(g!==gen) return; galRun=false; document.getElementById("bk").style.visibility="hidden";
         slots.forEach((sl,k)=>sl.style.setProperty("--d",(k*45)+"ms")); room.classList.add("walldone"); room.classList.remove("wallive"); setTimeout(()=>{ if(room.classList.contains("walldone")) room.classList.add("wallive"); }, 31*45+1300); placeWall(); wallPictures(); zoomEl.querySelector("input").value=6-zoomCols; }, reduce?450:900);
