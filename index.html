@@ -2063,7 +2063,7 @@ function openSheet(slot){
       V.card.animate([{opacity:0},{opacity:1}],{duration:reduce?1:260,easing:"ease-out"}).onfinish=()=>{ V.card.style.opacity="";
         V.flat.hidden=true; V.flat.style.filter=""; V.flat.getAnimations().forEach(a=>a.cancel()); };
       V.el.classList.add("ready"); V.card.focus({preventScroll:true}); mkPeekShow(true); setTimeout(hcGlint,250);
-      clearInterval(V.glintT); V.glintT=setInterval(()=>{ if(!vOpen||vDay!==day){ clearInterval(V.glintT); return; } if(M.face===0&&!M.drag&&!M.hold&&!HC.on&&!vZooming&&!V.el.classList.contains("mking")&&!(window.SWP&&SWP.on)) hcGlint(); },6000); };   /* the glint comes back every 6 s */
+      clearInterval(V.glintT); V.glintT=setInterval(()=>{ if(!vOpen||vDay!==day){ clearInterval(V.glintT); return; } if(M.face===0&&!M.drag&&!M.hold&&!HC.on&&!vZooming&&!V.el.classList.contains("mking")&&!(window.SWP&&SWP.on)) hcGlint(); },8000); };   /* the glint comes back every 8 s */
     ready.then(show); setTimeout(()=>{ flown&&show(); },2500);
     vFly({x:r.left,y:r.top,w:r.width,h:r.height}, vTarget(), 620, ()=>{ flown=true; if(!shown) vBusy(true);
       /* meanwhile the flat sheet sharpens to the full picture if it is ready */
