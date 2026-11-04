@@ -1781,8 +1781,9 @@ function mkSwap(to){
 function hcEl(){ if(!HC.el){ HC.el=document.createElement("div"); HC.el.className="vhalo"; document.body.appendChild(HC.el); } return HC.el; }
 function shinePos(t){ const p=0.16+0.635*Math.pow(Math.min(1,t),3.2);   /* the band enters the bottom-left corner as it starts and leaves the top-right corner exactly at the end */   /* starts late, ends fast, fully out at the very end of the hold */   /* starts late, ends abruptly */ return `${(120-140*p).toFixed(1)}% ${(-20+140*p).toFixed(1)}%`; }
 function hcGlint(){ if(reduce||!MAKING[vDay]) return; const e=hcShine(); e._d=null; const t0=performance.now();
-  const u=shineMask(); e.style.webkitMaskImage=e.style.maskImage=u; e._d=u;
-  e.style.width=vW+"px"; e.style.height=vH+"px"; e.style.marginLeft=(-vW/2)+"px"; e.style.marginTop=(-vH/2)+"px"; e.style.transform="";
+  const hs=!!(fan&&fan.spread);   /* Hero apart: the glint crosses the sheet in front */
+  const u=hs ? `url(pages/${HERO[fan.front]}-torn${COARSE?"-m":""}.webp)` : shineMask(); e.style.webkitMaskImage=e.style.maskImage=u; e._d=hs?null:u;
+  e.style.width=vW+"px"; e.style.height=vH+"px"; e.style.marginLeft=(-vW/2)+"px"; e.style.marginTop=(-vH/2)+"px"; e.style.transform=hs?"translateY(-8px)":""; e.style.zIndex=fan?"4":"";
   const f=now=>{ if(HC.on||HC.k>0.001||!vOpen) return; const k=Math.min(1,(now-t0)/1100); e.style.backgroundPosition=shinePos(k); e.style.opacity=(0.3*Math.sin(k*Math.PI)).toFixed(3);
     if(k<1) requestAnimationFrame(f); else e.style.opacity="0"; };
   requestAnimationFrame(f); }
@@ -1998,6 +1999,8 @@ function openHero(slot){
       V.card.style.visibility="visible"; requestAnimationFrame(()=>{ V.flat.hidden=true; V.flat.getAnimations().forEach(a=>a.cancel()); });
       V.el.classList.add("ready");
       if(COARSE) setTimeout(()=>{ if(fan) heroSpread(); },120);   /* phones: the trio opens already apart */
+      setTimeout(hcGlint,COARSE?700:250);   /* the glint, as on every sheet with references, then every 8 s */
+      clearInterval(V.glintT); V.glintT=setInterval(()=>{ if(!vOpen||!fan){ clearInterval(V.glintT); return; } if(!fan.cards.some(c=>c.drag||c.hold||c.face!==0)&&!HC.on&&!vZooming&&!V.el.classList.contains("mking")&&!(window.SWP&&SWP.on)) hcGlint(); },8000);
     });
   });
   cancelAnimationFrame(vRaf); vRaf=requestAnimationFrame(vStep);
