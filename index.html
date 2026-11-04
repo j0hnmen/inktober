@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=Courier+Prime:wght@400;700&display=swap">
+<script data-goatcounter="https://inktober-nabil.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 <style>
@@ -895,6 +896,7 @@ function build(){
   if(window.__music){ if(actx) fadeOutCurrent(); music(stack[0].dataset.day); }
 }
 /* Labels: one per drawing; the three Hero sheets share one label, which leaves with the last of them */
+function gcEv(path,title){ try{ window.goatcounter && goatcounter.count && goatcounter.count({path,title,event:true}); }catch(e){} }   /* analytics (site only): nothing happens without the counter */
 const NAMES={"01":"Apple","02":"Relic","03":"Miniature","04":"Cactus","05":"Smack","06":"Ogre","07":"Panic","08":"Stinky","09":"Ram","10":"Mystical",
   "11":"Rescue","12":"Toss","13":"Flimsy","14":"Lady","15":"Hooray","16":"Gangly","17":"Contraption","18":"Flightless","19":"Confused","20":"Lounge",
   "21":"Hero","22":"Beacon","23":"Dapper","24":"Bake","25":"Fracture","26":"Zip","27":"Dumb","28":"Trophy","29":"Tusk","30":"Cookie","31":"Flex"};
@@ -1233,7 +1235,7 @@ function flyWhole(c){
       reveal(day,g);                                   /* the last drawing joins the wall only once the notebook is off the screen */
       /* the finale: one drawing after another comes up to full strength, left to right, top to bottom */
       slots.forEach((s,i)=>s.style.setProperty("--d",(i*45)+"ms"));
-      room.classList.add("walldone"); placeWall(); wallPictures();
+      room.classList.add("walldone"); placeWall(); wallPictures(); gcEv("galerie","Mode galerie");
       room.classList.remove("wallive"); setTimeout(()=>{ if(room.classList.contains("walldone")) room.classList.add("wallive"); }, 31*45+1300);   /* live (hover, clicks, corners, glints) only once the last drawing is fully up */
       zoomEl.querySelector("input").value=6-zoomCols;
       if(c.onGone) c.onGone();
@@ -2036,6 +2038,7 @@ function zipSpiral(){
 }
 function openSheet(slot){
   const day=slot.dataset.day; if(!day||vOpen) return;
+  gcEv("dessin/"+(day.startsWith("21")?"21":day), "Dessin "+(day.startsWith("21")?"21":day)+" · "+(NAMES[day]||NAMES[day.slice(0,2)]||""));   /* analytics: which drawing is opened */
   showWLabel(null);
   music(day,1);   /* its music, at full level, while the sheet is open */
   if(day.startsWith("21")){ openHero(slot); return; }
@@ -2818,7 +2821,7 @@ function tearLite(){
           if(u<1) requestAnimationFrame(f); else { glint(); if(flexEnd){ pile.remove(); introPile=null; reveal(lastD,g); } } })(t00); }
       else { book.style.setProperty("--gone","opacity .5s ease"); book.classList.add("gone"); }
       setTimeout(()=>{ if(g!==gen) return; galRun=false; document.getElementById("bk").style.visibility="hidden";
-        slots.forEach((sl,k)=>sl.style.setProperty("--d",(k*45)+"ms")); room.classList.add("walldone"); room.classList.remove("wallive"); setTimeout(()=>{ if(room.classList.contains("walldone")) room.classList.add("wallive"); }, 31*45+1300); placeWall(); wallPictures(); zoomEl.querySelector("input").value=6-zoomCols; }, reduce?450:900);
+        slots.forEach((sl,k)=>sl.style.setProperty("--d",(k*45)+"ms")); gcEv("galerie","Mode galerie"); room.classList.add("walldone"); room.classList.remove("wallive"); setTimeout(()=>{ if(room.classList.contains("walldone")) room.classList.add("wallive"); }, 31*45+1300); placeWall(); wallPictures(); zoomEl.querySelector("input").value=6-zoomCols; }, reduce?450:900);
       return; }
     const d=days[i], k=i; i++;
     /* both this sheet and the one under it must be decoded first: the pile shows the sheet underneath at the very moment
@@ -2854,7 +2857,7 @@ function tearBlock(){
     slots.forEach((s,i)=>s.style.setProperty("--d",(i*45)+"ms"));
     (c.rest||[]).forEach((d,i)=>{ const sl=slots[parseInt(d,10)-1]; if(sl) sl.style.setProperty("--d",(i*40)+"ms"); reveal(d,g); });
     document.getElementById("bk").style.visibility="hidden"; showSig();
-    room.classList.add("walldone"); room.classList.remove("wallive"); setTimeout(()=>{ if(room.classList.contains("walldone")) room.classList.add("wallive"); }, 31*45+1300); placeWall(); wallPictures(); zoomEl.querySelector("input").value=6-zoomCols; };
+    gcEv("galerie","Mode galerie"); room.classList.add("walldone"); room.classList.remove("wallive"); setTimeout(()=>{ if(room.classList.contains("walldone")) room.classList.add("wallive"); }, 31*45+1300); placeWall(); wallPictures(); zoomEl.querySelector("input").value=6-zoomCols; };
   p._live=true; p.classList.add("grab");
   if(!p._sh){ p._sh=document.createElement("div"); p._sh.className=p.dataset.day==="29"?"psh wsh":"psh"; pagesEl.insertBefore(p._sh,p); }
   p._sh.style.zIndex=p.style.zIndex; c.gl=0; c.bx=0;
