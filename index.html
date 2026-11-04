@@ -1666,8 +1666,8 @@ function mkVidOff(){ const v=vMk.querySelector("video"); if(v){ v.classList.remo
 function mkSet(side,url){ const im=new Image(); im.src=url; const L=side?"b":"a";
   const go=()=>{ const a=vMk.querySelector("i."+L), o=vMk.querySelector("i."+(side?"a":"b")); a.style.backgroundImage=`url(${url})`; a.classList.add("on"); o.classList.remove("on"); };
   (im.decode?im.decode():Promise.resolve()).then(go,go); }
-/* Dumb, full screen: grab a corner and turn the sheet, like in a design tool (no hint) */
-const ROTATE={"27":1};
+/* Flightless, Dumb, Trophy, full screen: grab a corner and turn the sheet, like in a design tool (no hint) */
+const ROTATE={"18":1,"27":1,"28":1};
 let vRot=null, vRotClick=false;
 function setRz(z){ M.rz=z; V.stage.style.setProperty("--rz",z+"deg"); }
 V.stage.addEventListener("pointerdown",e=>{
