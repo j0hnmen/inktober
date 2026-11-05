@@ -536,11 +536,11 @@ html.neg .viewer .vcap b{color:#151515} html.neg .viewer .vcap span{color:#4a474
 /* a light hover (mouse): the sheet lifts a little and leans, as it keeps floating */
 .fl8 img{transition:transform .6s cubic-bezier(.2,.8,.25,1)}
 .fl8 .fs{pointer-events:auto;touch-action:none} .fl8 .fs.out{pointer-events:none}
-@media (hover:hover){ .fl8 .fs:hover img{transform:translateY(-7px) scale(1.035) rotate(-1deg)} }
+@media (hover:hover) and (pointer:fine){ .fl8 .fs:hover img{transform:translateY(-7px) scale(1.035) rotate(-1deg)} }
 .fl8 .fsi{perspective:900px}
 .fl8 .ftag{width:auto;aspect-ratio:auto;z-index:-1}   /* under the sheets */
 .fl8 .ftag b{transition:transform .6s cubic-bezier(.2,.8,.25,1)}
-@media (hover:hover){ .fl8 .ftag:hover b{transform:translateY(-4px) scale(1.02) rotate(-.5deg)} }   /* a lighter hover than the sheets' */
+@media (hover:hover) and (pointer:fine){ .fl8 .ftag:hover b{transform:translateY(-4px) scale(1.02) rotate(-.5deg)} }   /* a lighter hover than the sheets' */
 .fl8 .ftag b{display:block;background:#fff;color:#000;font:700 var(--fz,20px)/normal "Courier Prime","Courier New",monospace;letter-spacing:-.02em;white-space:nowrap;padding:.317em .611em;box-shadow:0 0 0 .5px #8c8c8c}   /* the notebook's labels, floating */   /* pulled, a sheet turns in depth (up to ~15°) and springs back */
 .gate .gb{all:unset;position:relative;width:var(--gs,64px);height:var(--gs,64px);border-radius:50%;display:grid;place-items:center;cursor:pointer;
   -webkit-tap-highlight-color:transparent;opacity:0;transform:translateY(var(--gy,18px));
@@ -2523,9 +2523,9 @@ function fl8T(e,k){ const [ux,uy]=e._u; e.style.transform=`translate(${e._ax==nu
 /* grab a sheet of the opening and pull: it turns in depth, up to ~15°, and springs back when let go */
 fl8.addEventListener("pointerdown",ev=>{ const fs=ev.target.closest(".fs"); if(!fs) return; const im=fs.querySelector("img"); if(!im) return;
   ev.preventDefault(); const x0=ev.clientX, y0=ev.clientY, id=ev.pointerId; try{ fs.setPointerCapture(id); }catch(e){}
-  im.style.transition="transform .25s cubic-bezier(.2,.8,.25,1)";
+  im.style.transition="transform .25s cubic-bezier(.2,.8,.25,1)"; const lift=ev.pointerType==="mouse"?"translateY(-7px) scale(1.035) ":"";   /* touch: the tilt only, no hover lift */
   const mv=e=>{ if(e.pointerId!==id) return; const dx=e.clientX-x0, dy=e.clientY-y0, c=v=>15*Math.tanh(v/15);
-    im.style.transform=`translateY(-7px) scale(1.035) rotateY(${c(dx*0.12).toFixed(2)}deg) rotateX(${c(-dy*0.12).toFixed(2)}deg)`; };
+    im.style.transform=`${lift}rotateY(${c(dx*0.12).toFixed(2)}deg) rotateX(${c(-dy*0.12).toFixed(2)}deg)`; };
   const up=e=>{ if(e.pointerId!==id) return; fs.removeEventListener("pointermove",mv); fs.removeEventListener("pointerup",up); fs.removeEventListener("pointercancel",up);
     im.style.transition="transform .9s cubic-bezier(.3,1.45,.45,1)"; im.style.transform=""; setTimeout(()=>{ if(!im.style.transform) im.style.transition=""; },950); };
   fs.addEventListener("pointermove",mv); fs.addEventListener("pointerup",up); fs.addEventListener("pointercancel",up); });
