@@ -50,6 +50,7 @@ body{font-family:var(--mono);font-size:11px;overflow:hidden;-webkit-font-smoothi
 .stage{grid-row:2;width:100%;display:grid;place-items:start center;position:relative;z-index:1}
 .room.flying .stage{z-index:6;pointer-events:none} .room.flying .book{pointer-events:auto}
 .room.holding .stage{z-index:6}
+.room.glinting .stage{z-index:7;pointer-events:none}
 /* The wall behind the notebook: 31 slots, always 8 + 8 + 8 + 7 (the last row centred), scaled as one block to fit the screen.
    A torn sheet dissolves into its day's slot at 35% once it has fallen. */
 .wallgrid{position:absolute;inset:0;z-index:0;pointer-events:none;transition:opacity 1.2s ease}
@@ -478,7 +479,7 @@ html.neg .viewer .vcap b{color:#151515} html.neg .viewer .vcap span{color:#4a474
 @media (min-width:601px){ .reset.gal{right:80px;bottom:39px} }   /* computer: more room round the edges */
 .room .book{transition:transform .9s cubic-bezier(.3,.7,.2,1), filter .5s ease} .room.galpeek:not(.neg) .book{filter:brightness(.65)}   /* the notebook steps back a little while the wall comes up */
 .reset.gal{opacity:0;pointer-events:none;transform:translateX(48px);transition:opacity .8s ease, transform .9s cubic-bezier(.2,.8,.25,1), box-shadow .25s ease, color .2s ease}   /* from the right */   /* not on the way in (logo and sound buttons): it comes with the notebook */
-.room.galon .reset.gal{opacity:1;pointer-events:auto;transform:none}
+.room.galon.galbtn .reset.gal{opacity:1;pointer-events:auto;transform:none}   /* only once the first sheet (Apple) has been torn out */
 .reset:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 /* phones: the reset button moves to the bottom corner so the track title has the top */
 @media (max-width:600px){.reset{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);right:max(10px, env(safe-area-inset-right,0px));padding:6px 8px;font-size:9px}}
@@ -758,6 +759,7 @@ let gen=0;
 function reveal(day,g){
   if(g!==gen) return;
   const s=slots[parseInt(day,10)-1]; if(!s) return;
+  document.querySelector(".room").classList.add("galbtn");   /* the first tear: the gallery button comes in */
   /* Hero's second and third sheets bring a pre-merged image (the sketches laid over each other), which cross-fades over the previous one */
   if(!s.dataset.day) s.dataset.day=day;   /* the sheet this slot opens (Hero: its first sketch) */
   if(window.MAKING && MAKING[day] && !s.classList.contains("hasmk")){ s.classList.add("hasmk"); }
@@ -1223,8 +1225,8 @@ function tickWhole(){
 }
 /* Flex's end: a small star of light flashes where the notebook vanished */
 function glint(){
-  const gl=document.createElement("div"); gl.className="glint"; book.appendChild(gl);
-  setTimeout(()=>gl.remove(),900);
+  const gl=document.createElement("div"); gl.className="glint"; book.appendChild(gl); room.classList.add("glinting");   /* the star stays over the gallery's drawings */
+  setTimeout(()=>{ gl.remove(); room.classList.remove("glinting"); },900);
 }
 function flyWhole(c){
   freeFlyers();
@@ -1573,9 +1575,9 @@ function makeCard(el, sh){
     el.style.transform=(C===window.__M&&HC.k>0.001?`scale(${(1+0.07*HC.k).toFixed(4)}) `:"")+(C===window.__M&&SWP.on?`translate(${SWP.dx.toFixed(1)}px,${(SWP.dy||0).toFixed(1)}px) scale(${SWP.ds.toFixed(4)}) `:"")+`translateY(${bob}px) rotateZ(${C.rz||0}deg) rotateX(${RX}deg) rotateY(${RY}deg) rotateZ(${fz}deg)`;
     const dyn=Math.max(-6,Math.min(6,-C.vy*1.2));
     for(let i=1;i<VHALF;i++){
-      const rip=(reduce||C.hold)?0:Math.sin(t*0.8-i*0.6)*0.7+Math.sin(t*0.5+i*0.45)*0.45;   /* held for the making of: flat, so the photo has no seams */
+      const rip=((reduce||C.hold)?0:Math.sin(t*0.8-i*0.6)*0.7+Math.sin(t*0.5+i*0.45)*0.45)*(C===window.__M?1-PF:1);   /* the press on top: flat paper */   /* held for the making of: flat, so the photo has no seams */
       const pull=C.drag?Math.max(-5,Math.min(5,-(C.ry-C.base)*0.06)):0;
-      const tr=`rotateY(${(dyn*(0.4+i*0.18)+rip+pull*i*0.4).toFixed(2)}deg)`;
+      const tr=`rotateY(${((dyn*(0.4+i*0.18)+pull*i*0.4)*(C===window.__M?1-PF:1)+rip).toFixed(2)}deg)`;
       C.R[i].style.transform=tr; C.L[i].style.transform=tr;
     }
     const a=((RY)%360+360)%360, rel=Math.sin(a*Math.PI/180);
@@ -1807,17 +1809,22 @@ function hcGlint(){ if(reduce||!MAKING[vDay]) return; const e=hcShine(); e._d=nu
   requestAnimationFrame(f); setTimeout(hcWave,850); }   /* right after the glint, the press */
 /* hold me: the drawing itself gives under a finger (phones: at its centre; mouse: under the swirl), then one soft swell runs out through the paper */
 const PRESS_VS="attribute vec2 p;varying vec2 uv;void main(){uv=p*0.5+0.5;uv.y=1.0-uv.y;gl_Position=vec4(p,0.,1.);}";
-const PRESS_FS="precision mediump float;varying vec2 uv;uniform sampler2D tex;uniform vec2 c;uniform float t;uniform float asp;"+
+const PRESS_FS="precision mediump float;varying vec2 uv;uniform sampler2D tex;uniform vec2 c;uniform float t;uniform float hk;uniform float asp;"+
  "float H(vec2 q){ vec2 d=q-c; d.x*=asp; float r=length(d); float press=smoothstep(0.,.18,t)*(1.-smoothstep(.35,.9,t));"+
  " float dent=-0.42*press*exp(-r*r/0.012); float front=(t-0.25)*0.55; float ring=0.;"+
  " if(t>0.25){ float x=r-front; ring=-(x/0.045)*exp(-x*x/0.0045)*0.16*smoothstep(.25,.45,t)*exp(-(t-0.25)*1.5)*(1.-smoothstep(.3,.48,r)); }"+
- " return (dent+ring)*0.85; }"+
+ " float w=0.006+0.03*hk; float hold=-0.8*hk*exp(-r*r/w)+0.09*hk*exp(-(r-1.35*sqrt(w))*(r-1.35*sqrt(w))/(0.25*w));"+   /* held: a hollow that deepens and widens, its rim lifting a little */
+ " return (dent+ring+hold)*0.85; }"+
  "void main(){ float e=0.002; float h=H(uv); vec2 g=vec2(H(uv+vec2(e,0.))-H(uv-vec2(e,0.)),H(uv+vec2(0.,e))-H(uv-vec2(0.,e)))/(2.*e);"+
  " vec4 col=texture2D(tex,uv+g*0.0013); float light=dot(normalize(vec3(-g*0.06,1.)),normalize(vec3(-0.5,-0.6,1.0)));"+
- " float sh=clamp(1.+(light-0.78)*1.0+h*0.15,0.82,1.15); gl_FragColor=vec4(col.rgb*sh,col.a); }";
-let PR=null;
+ " float sh=clamp(1.+(light-0.788)*1.0+h*0.15,0.82,1.15);"+
+ " vec2 d=uv-c; d.x*=asp; float m=(1.-smoothstep(.42,.52,length(d)))*smoothstep(.1,.17,uv.x)*smoothstep(0.,.04,1.-uv.x)*smoothstep(0.,.03,uv.y)*smoothstep(0.,.03,1.-uv.y);"+
+ " gl_FragColor=vec4(col.rgb*sh,col.a)*m; }";   /* premultiplied; only where the paper moves: the spiral side and the torn edges stay the real sheet */
+/* The press is drawn on a canvas laid exactly over the card: it copies the card's transform every frame, and while it is
+   there the card's paper strips are held flat (PF), so the two pictures match to the pixel (no doubled holes or edges). */
+let PR=null, PF=0, PFr=0;
 function pressGL(){ if(PR!==null) return PR; PR=false;
-  try{ const cv=document.createElement("canvas"); cv.className="vpress"; const gl=cv.getContext("webgl",{premultipliedAlpha:false,alpha:true,antialias:false}); if(!gl) return PR;
+  try{ const cv=document.createElement("canvas"); cv.className="vpress"; const gl=cv.getContext("webgl",{premultipliedAlpha:true,alpha:true,antialias:false}); if(!gl) return PR;
     const sh=(k,src)=>{ const o=gl.createShader(k); gl.shaderSource(o,src); gl.compileShader(o); return o; };
     const pr=gl.createProgram(); gl.attachShader(pr,sh(gl.VERTEX_SHADER,PRESS_VS)); gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,PRESS_FS)); gl.linkProgram(pr);
     if(!gl.getProgramParameter(pr,gl.LINK_STATUS)) return PR; gl.useProgram(pr);
@@ -1825,24 +1832,43 @@ function pressGL(){ if(PR!==null) return PR; PR=false;
     const l=gl.getAttribLocation(pr,"p"); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);
     const tx=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,tx);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
-    PR={cv,gl,c:gl.getUniformLocation(pr,"c"),t:gl.getUniformLocation(pr,"t"),asp:gl.getUniformLocation(pr,"asp"),raf:0,src:""};
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+    PR={cv,gl,c:gl.getUniformLocation(pr,"c"),t:gl.getUniformLocation(pr,"t"),hk:gl.getUniformLocation(pr,"hk"),asp:gl.getUniformLocation(pr,"asp"),raf:0,src:"",mode:""};
   }catch(e){ PR=false; } return PR; }
+function pressSrc(){ if(fan&&fan.spread) return `pages/${HERO[fan.front]}-torn${COARSE?"-m":""}.webp`; if(fan) return "pages/21c-wall.webp";
+  const m=/url\(["']?([^"')]+)/.exec(V.card.style.getPropertyValue("--rf")||""); return m?m[1]:`pages/${vDay}-torn${COARSE?"-m":""}.webp`; }   /* the very picture the card shows */
+function pressFlatBack(){ cancelAnimationFrame(PFr); let l=performance.now(); const f=now=>{ PF=Math.max(0,PF-(now-l)/350); l=now; if(PF>0) PFr=requestAnimationFrame(f); }; PFr=requestAnimationFrame(f); }
+function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=pressSrc(), go=()=>{
+    if(!vOpen||(mode==="wave"&&(HC.on||M.drag||M.hold))||(mode==="hold"&&!HC.on)) return;
+    const {cv,gl}=P, d=Math.min(2,devicePixelRatio||1), hs=!!(fan&&fan.spread), dy=hs?-8:0;
+    P.mode=mode; P.cx=cx; P.cy=cy; P.t0=-1; P.end=0;
+    if(cv.width!==Math.round(vW*d)||cv.height!==Math.round(vH*d)){ cv.width=Math.round(vW*d); cv.height=Math.round(vH*d); }
+    cv.style.cssText=`position:absolute;left:50%;top:50%;width:${vW}px;height:${vH}px;margin:${-vH/2+dy}px 0 0 ${-vW/2}px;z-index:${fan?5:3};pointer-events:none;visibility:hidden`;
+    gl.viewport(0,0,cv.width,cv.height); gl.uniform1f(P.asp,vW/vH); if(!cv.isConnected) V.stage.appendChild(cv);
+    cancelAnimationFrame(P.raf); cancelAnimationFrame(PFr); let last=performance.now();
+    const f=now=>{ const dt=now-last; last=now;
+      const stop=!vOpen||vZooming||(P.mode==="wave"?(HC.on||M.drag||M.hold||(fan&&fan.cards.some(c=>c.drag||c.hold))):(HC.sw||(!HC.on&&HC.k<=0.001)||M.hold));
+      if(stop){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }   /* the paper is the drawing again, and its strips may float again */
+      if(!fan){ PF=Math.min(1,PF+dt/250); cv.style.transform=V.card.style.transform; }   /* the strips settle flat first (a quarter second), then the press shows */
+      if(!fan&&PF<1){ P.raf=requestAnimationFrame(f); return; }
+      if(P.t0<0) P.t0=now; cv.style.visibility="visible";
+      const t=(now-P.t0)/1000; if(P.mode==="wave"&&t>2.6){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }
+      gl.uniform2f(P.c,P.cx,P.cy); gl.uniform1f(P.t,P.mode==="wave"?t:9.); gl.uniform1f(P.hk,P.mode==="hold"?Math.pow(HC.k,1.15):0.);
+      gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); P.raf=requestAnimationFrame(f); };
+    P.raf=requestAnimationFrame(f); };
+  const d=Math.min(2,devicePixelRatio||1), W=Math.round(vW*d), H=Math.round(vH*d), key=src+"@"+W;
+  if(P.src===key) go(); else { const im=new Image(); im.onload=()=>{   /* scaled down once, smoothly, to the canvas size: a big picture sampled straight by the GPU breaks up the fine holes */
+    const c2=document.createElement("canvas"); c2.width=W; c2.height=H; const x=c2.getContext("2d"); x.imageSmoothingEnabled=true; x.imageSmoothingQuality="high"; x.drawImage(im,0,0,W,H);
+    P.gl.texImage2D(P.gl.TEXTURE_2D,0,P.gl.RGBA,P.gl.RGBA,P.gl.UNSIGNED_BYTE,c2); P.src=key; go(); }; im.src=src; } }
 function hcWave(){ if(reduce||!vOpen||HC.on||vZooming||M.drag||M.hold||V.el.classList.contains("mking")) return;
   if(fan && fan.cards.some(c=>c.drag||c.hold||c.face!==0)) return;
-  const P=pressGL(); if(!P||P.raf) return;
+  const P=pressGL(); if(!P||P.mode) return;
   const hs=!!(fan&&fan.spread), dy=hs?-8:0, r=V.stage.getBoundingClientRect(), L=r.left+r.width/2-vW/2, T=r.top+r.height/2-vH/2+dy;
   let cx=.5, cy=.5; if(!COARSE){ const q=window.curSwirl&&curSwirl(); if(!q) return; cx=(q[0]-L)/vW; cy=(q[1]-T)/vH; if(cx<0||cx>1||cy<0||cy>1) return; }   /* mouse: only under the swirl */
-  const src= hs ? `pages/${HERO[fan.front]}-torn${COARSE?"-m":""}.webp` : fan ? "pages/21c-wall.webp" : `pages/${vDay}-torn${COARSE?"-m":""}.webp`;
-  const im=new Image(); im.onload=()=>{ if(!vOpen||HC.on||M.drag||M.hold) return;
-    const {cv,gl}=P, d=Math.min(2,devicePixelRatio||1); cv.width=Math.round(vW*d); cv.height=Math.round(vH*d);
-    cv.style.cssText=`position:absolute;left:50%;top:50%;width:${vW}px;height:${vH}px;margin:${-vH/2+dy}px 0 0 ${-vW/2}px;z-index:${fan?5:3};pointer-events:none`;
-    gl.viewport(0,0,cv.width,cv.height); if(P.src!==src){ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im); P.src=src; }
-    gl.uniform2f(P.c,cx,cy); gl.uniform1f(P.asp,vW/vH); V.stage.appendChild(cv); const t0=performance.now();
-    const f=now=>{ const t=(now-t0)/1000;
-      if(t>2.6||!vOpen||HC.on||vZooming||M.drag||M.hold||(fan&&fan.cards.some(c=>c.drag||c.hold))){ P.raf=0; cv.remove(); return; }   /* any touch: the paper is the drawing again */
-      gl.uniform1f(P.t,t); gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); P.raf=requestAnimationFrame(f); };
-    P.raf=requestAnimationFrame(f); };
-  im.src=src; }
+  pressRun("wave",cx,cy); }
+/* held for the references: the paper gives a little more every moment under the finger / the cursor (single sheets only) */
+function pressHold(x,y){ if(reduce||fan||!vOpen) return; const r=V.card.getBoundingClientRect(); if(!r.width) return;
+  pressRun("hold",Math.min(.9,Math.max(.1,(x-r.left)/r.width)),Math.min(.9,Math.max(.1,(y-r.top)/r.height))); }
 function shineMask(){ return V.el.classList.contains("hero") ? "url(pages/21c-wall.webp)" : `url(pages/${vDay}-torn${COARSE?"-m":""}.webp)`; }
 function hcShine(){ let e=document.getElementById("vshine"); if(!e){ e=document.createElement("div"); e.id="vshine"; e.className="vshine"; V.stage.appendChild(e); } return e; }
 function hcDraw(){ if(!HC.sw){ const e=hcShine(), k=HC.k;
@@ -1856,7 +1882,7 @@ function hcDraw(){ if(!HC.sw){ const e=hcShine(), k=HC.k;
   const h=hcEl(), k=HC.k, g=Math.pow(k,0.8);   /* shows early and keeps swelling to the very end */
   h.style.width=(vW*1.5).toFixed(0)+"px"; h.style.height=(vH*1.4).toFixed(0)+"px";
   h.style.transform=`translate3d(${HC.x.toFixed(1)}px,${HC.y.toFixed(1)}px,0) translate(-50%,-50%) scale(${(0.12+0.88*g).toFixed(3)})`; h.style.opacity=(Math.min(1,k*1.8)*0.62).toFixed(3); }
-function hcStart(x,y,done){ { const r=V.stage.getBoundingClientRect(); x=r.left+r.width/2; y=r.top+r.height/2; } HC.x=x; HC.y=y; HC.done=done; HC.on=true; HC.t0=performance.now()-HC.k*1700; cancelAnimationFrame(HC.raf);
+function hcStart(x,y,done){ const px=x, py=y; { const r=V.stage.getBoundingClientRect(); x=r.left+r.width/2; y=r.top+r.height/2; } HC.x=x; HC.y=y; HC.done=done; HC.on=true; pressHold(px,py); HC.t0=performance.now()-HC.k*1700; cancelAnimationFrame(HC.raf);
   const f=now=>{ if(!HC.on) return; const u=Math.min(1,(now-HC.t0)/1700); HC.k=u; hcDraw();
     if(u<1){ HC.raf=requestAnimationFrame(f); return; }
     HC.on=false; HC.sw=true; const ok=HC.done&&HC.done(); if(!ok) HC.sw=false; HC.done=null; hcFade(ok?380:220); };
