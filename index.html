@@ -1838,10 +1838,10 @@ function pressGL(){ if(PR!==null) return PR; PR=false;
 function pressSrc(){ if(fan&&fan.spread) return `pages/${HERO[fan.front]}-torn${COARSE?"-m":""}.webp`; if(fan) return "pages/21c-wall.webp";
   const m=/url\(["']?([^"')]+)/.exec(V.card.style.getPropertyValue("--rf")||""); return m?m[1].replace(/\\/g,""):`pages/${vDay}-torn${COARSE?"-m":""}.webp`; }   /* the very picture the card shows */
 function pressFlatBack(){ cancelAnimationFrame(PFr); let l=performance.now(); const f=now=>{ PF=Math.max(0,PF-(now-l)/350); l=now; if(PF>0) PFr=requestAnimationFrame(f); }; PFr=requestAnimationFrame(f); }
-function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=pressSrc(), go=()=>{
+function pressRun(mode,cx,cy,under){ const P=pressGL(); if(!P) return; const src=pressSrc(), go=()=>{
     if(!vOpen||(mode==="wave"&&(HC.on||M.drag||M.hold))) return;
     const {cv,gl}=P, d=Math.min(2,devicePixelRatio||1), hs=!!(fan&&fan.spread), dy=hs?-8:0;
-    P.mode=mode; P.cx=cx; P.cy=cy; P.t0=-1; P.end=0;
+    P.mode=mode; P.cx=cx; P.cy=cy; P.under=!!under; P.t0=-1; P.end=0;
     if(cv.width!==Math.round(vW*d)||cv.height!==Math.round(vH*d)){ cv.width=Math.round(vW*d); cv.height=Math.round(vH*d); }
     const host=fan?V.stage:V.card;   /* a single sheet: the canvas lives inside the card itself, a hair in front of its paper, so it moves with it (no copying, nothing for Safari to sort) */
     cv.style.cssText=fan?`position:absolute;left:50%;top:50%;width:${vW}px;height:${vH}px;margin:${-vH/2+dy}px 0 0 ${-vW/2}px;z-index:5;pointer-events:none;visibility:hidden`
@@ -1853,7 +1853,7 @@ function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=press
       if(stop){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }   /* the paper is the drawing again, and its strips may float again */
       if(!fan) PF=Math.min(1,PF+dt/250);   /* the strips settle flat first (a quarter second), then the press shows */
       if(!fan&&PF<1){ P.raf=requestAnimationFrame(f); return; }
-      if(P.t0<0){ P.t0=now; if(!COARSE&&window.curPulse) setTimeout(curPulse,200); }   /* the swirl's rings leave with the swell */ cv.style.visibility="visible";
+      if(P.t0<0){ P.t0=now; if(P.under&&window.curPulse){ const m=P.mode; setTimeout(()=>{ if(P.mode===m&&P.under) curPulse(); },350); } }   /* the swirl's rings: only for a press that starts under it, a beat after it (never without it) */ cv.style.visibility="visible";
       const t=(now-P.t0)/1000; if(t>2.6){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }
       gl.uniform2f(P.c,P.cx,P.cy); gl.uniform1f(P.t,t); gl.uniform1f(P.hk,0.);
       gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); P.raf=requestAnimationFrame(f); };
@@ -1870,8 +1870,8 @@ function hcWave(){ if(reduce||!vOpen||HC.on||vZooming||M.drag||M.hold||V.el.clas
   if(fan && fan.cards.some(c=>c.drag||c.hold||c.face!==0)) return;
   const P=pressGL(); if(!P||P.mode) return;
   const hs=!!(fan&&fan.spread), dy=hs?-8:0, r=V.stage.getBoundingClientRect(), L=r.left+r.width/2-vW/2, T=r.top+r.height/2-vH/2+dy;
-  let cx=.5, cy=.5; if(!COARSE){ const q=window.curSwirl&&curSwirl(); if(q){ const x=(q[0]-L)/vW, y=(q[1]-T)/vH; if(x>=0&&x<=1&&y>=0&&y<=1){ cx=x; cy=y; } } }   /* mouse: under the swirl when it shows, from the centre otherwise */
-  pressRun("wave",cx,cy); }
+  let cx=.5, cy=.5, under=false; if(!COARSE){ const q=window.curSwirl&&curSwirl(); if(q){ const x=(q[0]-L)/vW, y=(q[1]-T)/vH; if(x>=0&&x<=1&&y>=0&&y<=1){ cx=x; cy=y; under=true; } } }   /* mouse: under the swirl when it shows, from the centre otherwise */
+  pressRun("wave",cx,cy,under); }
 function shineMask(){ return V.el.classList.contains("hero") ? "url(pages/21c-wall.webp)" : `url(pages/${vDay}-torn${COARSE?"-m":""}.webp)`; }
 function hcShine(){ let e=document.getElementById("vshine"); if(!e){ e=document.createElement("div"); e.id="vshine"; e.className="vshine"; V.stage.appendChild(e); } return e; }
 function hcDraw(){ if(!HC.sw){ const e=hcShine(), k=HC.k;
