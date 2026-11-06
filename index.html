@@ -2240,7 +2240,7 @@ function waveStart(slot){
   })(performance.now());
 }
 /* gallery hover: the same press as on the open sheet, from the centre, drawn inside the floating paper (its strips held flat meanwhile) */
-function galPress(W,src){ if(reduce||vOpen||wave!==W||W.out) return; const P=pressGL(); if(!P||P.mode) return;
+function galPress(W,src){ if(reduce||vOpen||wave!==W||W.out||!W.slot.classList.contains("hasmk")) return;   /* only the drawings with references, as in the viewer */ const P=pressGL(); if(!P||P.mode) return;
   const d=Math.min(2,devicePixelRatio||1), w=W.slot.clientWidth, h=W.slot.clientHeight, Wp=Math.round(w*d), Hp=Math.round(h*d), key=src+"@"+Wp;
   const go=()=>{ if(vOpen||wave!==W||W.out||P.mode) return; const {cv,gl}=P;
     P.mode="gal"; P.cx=.5; P.cy=.5; P.under=false; W.press=true;
