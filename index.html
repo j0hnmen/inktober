@@ -1865,7 +1865,7 @@ function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=press
 /* the first time the swirl shows on an open sheet, the press comes at once under it (desktop) */
 window.onSwirl=()=>{ if(!vOpen||V.swirled||!(window.curSwirl&&curSwirl())) return; V.swirled=true; if(PR&&PR.mode==="wave") PR.mode=""; hcWave(); };   /* a press already running starts again under the swirl */
 function pressKill(){ if(!PR) return; cancelAnimationFrame(PR.raf); PR.raf=0; PR.mode=""; PR.cv.remove(); cancelAnimationFrame(PFr); PF=0; }   /* leaving the sheet: the press goes at once, nothing stays on screen */
-function pressAt(x,y,mode="wave"){   /* mouse held on the drawing: the press runs out from under it, and goes on through the hold */
+function pressAt(x,y,mode="wave"){   /* held (finger or mouse): the press runs out from under it, and goes on through the hold */
   if(reduce||!vOpen||V.el.classList.contains("mking")) return; const r=V.card.getBoundingClientRect(); if(!r.width) return;
   const cx=(x-r.left)/r.width, cy=(y-r.top)/r.height; if(cx<0||cx>1||cy<0||cy>1) return; if(PR&&PR.mode) PR.mode=""; pressRun(mode,cx,cy); }
 function hcWave(){ if(reduce||!vOpen||HC.on||vZooming||M.drag||M.hold||V.el.classList.contains("mking")) return;
@@ -1887,7 +1887,7 @@ function hcDraw(){ if(!HC.sw){ const e=hcShine(), k=HC.k;
   const h=hcEl(), k=HC.k, g=Math.pow(k,0.8);   /* shows early and keeps swelling to the very end */
   h.style.width=(vW*1.5).toFixed(0)+"px"; h.style.height=(vH*1.4).toFixed(0)+"px";
   h.style.transform=`translate3d(${HC.x.toFixed(1)}px,${HC.y.toFixed(1)}px,0) translate(-50%,-50%) scale(${(0.12+0.88*g).toFixed(3)})`; h.style.opacity=(Math.min(1,k*1.8)*0.62).toFixed(3); }
-function hcStart(x,y,done){ if(!COARSE&&!fan) pressAt(x,y,"hold"); { const r=V.stage.getBoundingClientRect(); x=r.left+r.width/2; y=r.top+r.height/2; } HC.x=x; HC.y=y; HC.done=done; HC.on=true; HC.t0=performance.now()-HC.k*1700; cancelAnimationFrame(HC.raf);
+function hcStart(x,y,done){ if(!fan) pressAt(x,y,"hold"); { const r=V.stage.getBoundingClientRect(); x=r.left+r.width/2; y=r.top+r.height/2; } HC.x=x; HC.y=y; HC.done=done; HC.on=true; HC.t0=performance.now()-HC.k*1700; cancelAnimationFrame(HC.raf);
   const f=now=>{ if(!HC.on) return; const u=Math.min(1,(now-HC.t0)/1700); HC.k=u; hcDraw();
     if(u<1){ HC.raf=requestAnimationFrame(f); return; }
     HC.on=false; HC.sw=true; const ok=HC.done&&HC.done(); if(!ok) HC.sw=false; HC.done=null; hcFade(ok?380:220); };
