@@ -589,7 +589,7 @@ html.vzoomed .cur{opacity:0 !important;transition:opacity .15s ease}
 .cur::before{content:"";position:absolute;left:-32px;top:-32px;width:64px;height:64px;scale:1.7;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .3s ease;
   background:radial-gradient(circle,rgba(255,255,255,.3) 0%,rgba(255,255,255,.16) 28%,rgba(255,255,255,.05) 52%,rgba(255,255,255,0) 70%)}   /* a light, diffuse white glow under the swirl */
 .cur.sw::before{opacity:1}
-.cur.sw b{animation:cwave 2s cubic-bezier(.15,.6,.3,1) infinite}
+.cur.sw.pulse b{animation:cwave 2s cubic-bezier(.15,.6,.3,1) 1 both}   /* the swirl's rings go out once, with each press in the drawing (curPulse) */
 .cur.sw b+b{animation-delay:.3s}
 @keyframes cwave{0%{transform:scale(1);opacity:0}8%{opacity:.55}65%{transform:scale(2.3);opacity:0}100%{transform:scale(2.3);opacity:0}}   /* the swirl sends out a wave, like the sound button */
 .viewer .vcard,.viewer .vcard *{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
@@ -1853,7 +1853,7 @@ function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=press
       if(stop){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }   /* the paper is the drawing again, and its strips may float again */
       if(!fan) PF=Math.min(1,PF+dt/250);   /* the strips settle flat first (a quarter second), then the press shows */
       if(!fan&&PF<1){ P.raf=requestAnimationFrame(f); return; }
-      if(P.t0<0) P.t0=now; cv.style.visibility="visible";
+      if(P.t0<0){ P.t0=now; if(!COARSE&&window.curPulse) setTimeout(curPulse,200); }   /* the swirl's rings leave with the swell */ cv.style.visibility="visible";
       const t=(now-P.t0)/1000; if(t>2.6){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }
       gl.uniform2f(P.c,P.cx,P.cy); gl.uniform1f(P.t,t); gl.uniform1f(P.hk,0.);
       gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); P.raf=requestAnimationFrame(f); };
@@ -2809,6 +2809,7 @@ if(matchMedia("(hover: hover) and (pointer: fine)").matches){
   addEventListener("pointerup",up,{passive:true}); addEventListener("pointercancel",up,{passive:true}); addEventListener("blur",up);
   document.documentElement.addEventListener("mouseleave",()=>cur.classList.remove("on"));
   window.curPick=pick; setCur("index"); pick();
+  window.curPulse=()=>{ if(shown!=="tourbillon") return; cur.classList.remove("pulse"); void cur.offsetWidth; cur.classList.add("pulse"); };
   window.curSwirl=()=> shown==="tourbillon"&&cur.classList.contains("on") ? [x,y] : null;   /* where the swirl is, for the rings */
   if(self.PROMO){ tx=x=innerWidth*0.62; ty=y=innerHeight*0.72; cur.style.transform=`translate3d(${x}px,${y}px,0)`; cur.classList.add("on"); }   /* the promo video: the hand is on screen from the very start, even before the mouse moves (a browser reports no position until it does) */
   window.curIntroGo=()=>{ if(curIntroGo.d||reduce) return; curIntroGo.d=true; curBusy(1); };   /* the loader turns from the sound choice until the first drawing has landed */
