@@ -1857,7 +1857,7 @@ function pressRun(mode,cx,cy,under){ const P=pressGL(); if(!P) return; const src
     const f=now=>{ const dt=now-last; last=now;
       const stop=!vOpen||vZooming||(P.mode==="wave"?(HC.on||M.drag||M.hold||(fan&&fan.cards.some(c=>c.drag||c.hold))):(M.drag&&M.moved));
       if(stop){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }   /* the paper is the drawing again, and its strips may float again */
-      if(!fan) PF=Math.min(1,PF+dt/250);   /* the strips settle flat first (a quarter second), then the press shows */
+      if(!fan) PF=Math.min(1,Math.max(0,PF)+Math.max(0,dt)/250);   /* the strips settle flat first (a quarter second), then the press shows */
       if(!fan&&PF<1){ P.raf=requestAnimationFrame(f); return; }
       if(P.t0<0){ P.t0=now; if(P.under&&window.curPulse){ const m=P.mode; setTimeout(()=>{ if(P.mode===m&&P.under) curPulse(); },350); } }   /* the swirl's rings: only for a press that starts under it, a beat after it (never without it) */ cv.style.visibility="visible";
       const t=(now-P.t0)/1000; if(t>2.6){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }
@@ -1872,8 +1872,7 @@ function pressKill(){ if(!PR) return; cancelAnimationFrame(PR.raf); PR.raf=0; PR
 function pressAt(x,y,mode="wave"){   /* held (finger or mouse): the press runs out from under it, and goes on through the hold */
   if(reduce||!vOpen||V.el.classList.contains("mking")) return; const r=V.card.getBoundingClientRect(); if(!r.width) return;
   const cx=(x-r.left)/r.width, cy=(y-r.top)/r.height; if(cx<0||cx>1||cy<0||cy>1) return; if(PR&&PR.mode) PR.mode=""; pressRun(mode,cx,cy,!COARSE); }   /* mouse: the swirl is right there, so its rings follow */
-function hcWave(){ if(reduce||!vOpen||HC.on||vZooming||M.drag||M.hold||V.el.classList.contains("mking")) return;
-  if(fan && fan.cards.some(c=>c.drag||c.hold||c.face!==0)) return;
+function hcWave(){ if(reduce||!vOpen||fan||HC.on||vZooming||M.drag||M.hold||V.el.classList.contains("mking")) return;   /* (no press on Hero: three sheets, the fan) */
   const P=pressGL(); if(!P||P.mode) return;
   const hs=!!(fan&&fan.spread), dy=hs?-8:0, r=V.stage.getBoundingClientRect(), L=r.left+r.width/2-vW/2, T=r.top+r.height/2-vH/2+dy;
   let cx=.5, cy=.5, under=false; if(!COARSE){ const q=window.curSwirl&&curSwirl(); if(q){ const x=(q[0]-L)/vW, y=(q[1]-T)/vH; if(x>=0&&x<=1&&y>=0&&y<=1){ cx=x; cy=y; under=true; } } }   /* mouse: under the swirl when it shows, from the centre otherwise */
@@ -2252,7 +2251,7 @@ function galPress(W,src){ if(reduce||vOpen||wave!==W||W.out||!W.slot.classList.c
     const end=()=>{ P.raf=0; P.mode=""; cv.remove(); W.press=false; };
     const f=now=>{ const dt=now-last; last=now;
       if(vOpen||wave!==W||W.out){ end(); return; }
-      W.flat=Math.min(1,(W.flat||0)+dt/250); if(W.flat<1){ P.raf=requestAnimationFrame(f); return; }
+      W.flat=Math.min(1,(W.flat||0)+Math.max(0,dt)/250); if(W.flat<1){ P.raf=requestAnimationFrame(f); return; }
       if(t0<0) t0=now; cv.style.visibility="visible"; const t=(now-t0)/1000; if(t>2.6){ end(); return; }
       gl.uniform2f(P.c,.5,.5); gl.uniform1f(P.t,t); gl.uniform1f(P.hk,0.); gl.uniform1f(P.sz,1.); gl.uniform1f(P.amp,1.);
       gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); P.raf=requestAnimationFrame(f); };
