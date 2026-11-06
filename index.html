@@ -1595,6 +1595,7 @@ function makeCard(el, sh){
   };
   C.step=()=>{
     if(!C.drag){ const k=reduce?1:0.085; const ny=C.ry+(C.target-C.ry)*k; C.vy=ny-C.ry; C.ry=ny; C.rx+=(0-C.rx)*k; }
+    if(C.handled&&!C.drag&&Math.abs(C.target-C.ry)<3&&Math.abs(C.rx)<3){ C.handled=false; if(COARSE&&C===window.__M&&!fan&&C.face===0) setTimeout(hcWave,120); }   /* phones: the sheet is back at rest on its front: the press, from the centre */
     /* hover tilt: always eased towards where the mouse is (or back to flat when it leaves), never set at once */
     { const h=C.drag||C.hold||performance.now()<(C.calm||0); C.tx+=((h?0:(C.htx||0))-C.tx)*0.045; C.ty+=((h?0:(C.hty||0))-C.ty)*0.045; }
     C.flash*=.93;
@@ -1614,7 +1615,7 @@ function makeCard(el, sh){
       C.drag.oval=false; C.drag.x=e.clientX; C.drag.y=e.clientY; hcStop(); window.curPick&&setTimeout(curPick,0); }
     if(C.drag){
       const dx=e.clientX-C.drag.x, dy=e.clientY-C.drag.y; if(Math.abs(dx)+Math.abs(dy)>(e.pointerType==="mouse"?5:14)){ if(!C.moved) window.curPick&&setTimeout(curPick,0); C.moved=true; }
-      if(C.moved) hcStop();
+      if(C.moved){ hcStop(); C.handled=true; }   /* the sheet is being moved: once it settles again, a press (phones) */
       if(C.moved && C.onHold && V.el.classList.contains("mking")) C.onHold(false);   /* turning the sheet puts the making of away */
       const n=dx/Math.max(200,C.drag.w), prev=C.ry, now=performance.now();
       C.ry=C.base+(C.face===0?vPull(n):n*160); C.rx=Math.max(-18,Math.min(18,C.drag.rx-dy*0.12));
@@ -1813,15 +1814,15 @@ function hcGlint(){ if(reduce||!MAKING[vDay]) return; const e=hcShine(); e._d=nu
   requestAnimationFrame(f); setTimeout(hcWave,850); }   /* right after the glint, the press */
 /* hold me: the drawing itself gives under a finger (phones: at its centre; mouse: under the swirl), then one soft swell runs out through the paper */
 const PRESS_VS="attribute vec2 p;varying vec2 uv;void main(){uv=p*0.5+0.5;uv.y=1.0-uv.y;gl_Position=vec4(p,0.,1.);}";
-const PRESS_FS="precision mediump float;varying vec2 uv;uniform sampler2D tex;uniform vec2 c;uniform float t;uniform float hk;uniform float asp;uniform float sz;"+
+const PRESS_FS="precision mediump float;varying vec2 uv;uniform sampler2D tex;uniform vec2 c;uniform float t;uniform float hk;uniform float asp;uniform float sz;uniform float amp;"+
  "float H(vec2 q){ vec2 d=q-c; d.x*=asp; float r=length(d)/sz; float press=smoothstep(0.,.18,t)*(1.-smoothstep(.35,.9,t));"+
  " float dent=-0.42*press*exp(-r*r/0.012); float front=(t-0.25)*0.55; float ring=0.;"+
  " if(t>0.25){ float x=r-front; ring=-(x/0.045)*exp(-x*x/0.0045)*0.16*smoothstep(.25,.45,t)*exp(-(t-0.25)*1.5)*(1.-smoothstep(.3,.48,r)); }"+
  " float w=0.006+0.03*hk; float hold=-0.8*hk*exp(-r*r/w)+0.09*hk*exp(-(r-1.35*sqrt(w))*(r-1.35*sqrt(w))/(0.25*w));"+   /* held: a hollow that deepens and widens, its rim lifting a little */
- " return (dent+ring+hold)*0.85*sz; }"+
+ " return (dent+ring+hold)*0.85*sz*amp; }"+
  "void main(){ float e=0.002; float h=H(uv); vec2 g=vec2(H(uv+vec2(e,0.))-H(uv-vec2(e,0.)),H(uv+vec2(0.,e))-H(uv-vec2(0.,e)))/(2.*e);"+
  " vec4 col=texture2D(tex,uv+g*0.0013); float light=dot(normalize(vec3(-g*0.06,1.)),normalize(vec3(-0.5,-0.6,1.0)));"+
- " float sh=clamp(1.+(light-0.788)*1.0+h*0.15,0.82,1.15);"+
+ " float sh=clamp(1.+(light-0.788)*1.0+h*0.15,1.-0.18*amp,1.+0.15*amp);"+
  " vec2 d=uv-c; d.x*=asp; float m=(1.-smoothstep(.42*sz,.52*sz,length(d)))*smoothstep(.1,.17,uv.x)*smoothstep(0.,.04,1.-uv.x)*smoothstep(0.,.03,uv.y)*smoothstep(0.,.03,1.-uv.y);"+
  " gl_FragColor=vec4(col.rgb*sh,col.a)*m; }";   /* premultiplied; only where the paper moves: the spiral side and the torn edges stay the real sheet */
 /* The press is drawn on a canvas laid exactly over the card: it copies the card's transform every frame, and while it is
@@ -1837,7 +1838,7 @@ function pressGL(){ if(PR!==null) return PR; PR=false;
     const tx=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,tx);
     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
-    PR={cv,gl,c:gl.getUniformLocation(pr,"c"),t:gl.getUniformLocation(pr,"t"),hk:gl.getUniformLocation(pr,"hk"),asp:gl.getUniformLocation(pr,"asp"),sz:gl.getUniformLocation(pr,"sz"),raf:0,src:"",mode:""};
+    PR={cv,gl,c:gl.getUniformLocation(pr,"c"),t:gl.getUniformLocation(pr,"t"),hk:gl.getUniformLocation(pr,"hk"),asp:gl.getUniformLocation(pr,"asp"),sz:gl.getUniformLocation(pr,"sz"),amp:gl.getUniformLocation(pr,"amp"),raf:0,src:"",mode:""};
   }catch(e){ PR=false; } return PR; }
 function pressSrc(){ if(fan&&fan.spread) return `pages/${HERO[fan.front]}-torn${COARSE?"-m":""}.webp`; if(fan) return "pages/21c-wall.webp";
   const m=/url\(["']?([^"')]+)/.exec(V.card.style.getPropertyValue("--rf")||""); return m?m[1].replace(/\\/g,""):`pages/${vDay}-torn${COARSE?"-m":""}.webp`; }   /* the very picture the card shows */
@@ -1859,7 +1860,7 @@ function pressRun(mode,cx,cy,under){ const P=pressGL(); if(!P) return; const src
       if(!fan&&PF<1){ P.raf=requestAnimationFrame(f); return; }
       if(P.t0<0){ P.t0=now; if(P.under&&window.curPulse){ const m=P.mode; setTimeout(()=>{ if(P.mode===m&&P.under) curPulse(); },350); } }   /* the swirl's rings: only for a press that starts under it, a beat after it (never without it) */ cv.style.visibility="visible";
       const t=(now-P.t0)/1000; if(t>2.6){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }
-      gl.uniform2f(P.c,P.cx,P.cy); gl.uniform1f(P.t,t); gl.uniform1f(P.hk,0.); gl.uniform1f(P.sz,P.mode==="hold"?1.6:1.);   /* held: a bigger press */
+      gl.uniform2f(P.c,P.cx,P.cy); gl.uniform1f(P.t,t); gl.uniform1f(P.hk,0.); gl.uniform1f(P.sz,(P.mode==="hold"?1.6:1.)*(COARSE?1.25:1.)); gl.uniform1f(P.amp,COARSE?2.:1.);   /* held: a bigger press; phones: stronger and a little bigger (a small screen, held at arm's length) */
       gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); P.raf=requestAnimationFrame(f); };
     P.raf=requestAnimationFrame(f); };
   const d=Math.min(2,devicePixelRatio||1), W=Math.round(vW*d), H=Math.round(vH*d), key=src+"@"+W;
@@ -2252,7 +2253,7 @@ function galPress(W,src){ if(reduce||vOpen||wave!==W||W.out) return; const P=pre
       if(vOpen||wave!==W||W.out){ end(); return; }
       W.flat=Math.min(1,(W.flat||0)+dt/250); if(W.flat<1){ P.raf=requestAnimationFrame(f); return; }
       if(t0<0) t0=now; cv.style.visibility="visible"; const t=(now-t0)/1000; if(t>2.6){ end(); return; }
-      gl.uniform2f(P.c,.5,.5); gl.uniform1f(P.t,t); gl.uniform1f(P.hk,0.); gl.uniform1f(P.sz,1.);
+      gl.uniform2f(P.c,.5,.5); gl.uniform1f(P.t,t); gl.uniform1f(P.hk,0.); gl.uniform1f(P.sz,1.); gl.uniform1f(P.amp,1.);
       gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); P.raf=requestAnimationFrame(f); };
     P.raf=requestAnimationFrame(f); };
   if(P.src===key) go(); else { const im=new Image(); im.onload=()=>{ const c2=document.createElement("canvas"); c2.width=Wp; c2.height=Hp; const x=c2.getContext("2d"); x.imageSmoothingQuality="high"; x.drawImage(im,0,0,Wp,Hp);
