@@ -1849,7 +1849,7 @@ function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=press
     const f=now=>{ const dt=now-last; last=now;
       const stop=!vOpen||vZooming||(P.mode==="wave"?(HC.on||M.drag||M.hold||(fan&&fan.cards.some(c=>c.drag||c.hold))):(HC.sw||(!HC.on&&HC.k<=0.001)||M.hold));
       if(stop){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }   /* the paper is the drawing again, and its strips may float again */
-      if(!fan){ PF=Math.min(1,PF+dt/250); cv.style.transform=V.card.style.transform; }   /* the strips settle flat first (a quarter second), then the press shows */
+      if(!fan){ PF=Math.min(1,PF+dt/250); cv.style.transform=V.card.style.transform+" translateZ(.5px)";   /* a hair in front of the card: Safari sorts 3D planes by depth, so at the same depth the canvas could end up hidden behind it */ }   /* the strips settle flat first (a quarter second), then the press shows */
       if(!fan&&PF<1){ P.raf=requestAnimationFrame(f); return; }
       if(P.t0<0) P.t0=now; cv.style.visibility="visible";
       const t=(now-P.t0)/1000; if(P.mode==="wave"&&t>2.6){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }
@@ -1860,11 +1860,14 @@ function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=press
   if(P.src===key) go(); else { const im=new Image(); im.onload=()=>{   /* scaled down once, smoothly, to the canvas size: a big picture sampled straight by the GPU breaks up the fine holes */
     const c2=document.createElement("canvas"); c2.width=W; c2.height=H; const x=c2.getContext("2d"); x.imageSmoothingEnabled=true; x.imageSmoothingQuality="high"; x.drawImage(im,0,0,W,H);
     P.gl.texImage2D(P.gl.TEXTURE_2D,0,P.gl.RGBA,P.gl.RGBA,P.gl.UNSIGNED_BYTE,c2); P.src=key; go(); }; im.src=src; } }
+/* the first time the swirl shows on an open sheet, the press comes at once under it (desktop) */
+window.onSwirl=()=>{ if(!vOpen||V.swirled||!(window.curSwirl&&curSwirl())) return; V.swirled=true; if(PR&&PR.mode==="wave") PR.mode=""; hcWave(); };   /* a press already running starts again under the swirl */
+function pressKill(){ if(!PR) return; cancelAnimationFrame(PR.raf); PR.raf=0; PR.mode=""; PR.cv.remove(); cancelAnimationFrame(PFr); PF=0; }   /* leaving the sheet: the press goes at once, nothing stays on screen */
 function hcWave(){ if(reduce||!vOpen||HC.on||vZooming||M.drag||M.hold||V.el.classList.contains("mking")) return;
   if(fan && fan.cards.some(c=>c.drag||c.hold||c.face!==0)) return;
   const P=pressGL(); if(!P||P.mode) return;
   const hs=!!(fan&&fan.spread), dy=hs?-8:0, r=V.stage.getBoundingClientRect(), L=r.left+r.width/2-vW/2, T=r.top+r.height/2-vH/2+dy;
-  let cx=.5, cy=.5; if(!COARSE){ const q=window.curSwirl&&curSwirl(); if(!q) return; cx=(q[0]-L)/vW; cy=(q[1]-T)/vH; if(cx<0||cx>1||cy<0||cy>1) return; }   /* mouse: only under the swirl */
+  let cx=.5, cy=.5; if(!COARSE){ const q=window.curSwirl&&curSwirl(); if(q){ const x=(q[0]-L)/vW, y=(q[1]-T)/vH; if(x>=0&&x<=1&&y>=0&&y<=1){ cx=x; cy=y; } } }   /* mouse: under the swirl when it shows, from the centre otherwise */
   pressRun("wave",cx,cy); }
 function shineMask(){ return V.el.classList.contains("hero") ? "url(pages/21c-wall.webp)" : `url(pages/${vDay}-torn${COARSE?"-m":""}.webp)`; }
 function hcShine(){ let e=document.getElementById("vshine"); if(!e){ e=document.createElement("div"); e.id="vshine"; e.className="vshine"; V.stage.appendChild(e); } return e; }
@@ -2042,7 +2045,7 @@ function heroMerge(){
   fan.spread=false; fan.cards.forEach(c=>c.settle(0,-1)); fanLayout();
   fan.box.classList.remove("on"); V.el.classList.remove("fanned");
 }
-function openHero(slot){
+function openHero(slot){ V.swirled=false;
   M.onHold= MAKING["21c"] ? mkHold : null; V.el.classList.toggle("hasmk",!!MAKING["21c"]);
   vOpen=true; vSlot=slot; setCard(HERO[2],"pages/21c-wall.webp"); M.locked=true; vt0=performance.now();
   V.el.classList.add("open","hero"); V.el.classList.remove("ready"); vSize(); vLabel("21");
@@ -2078,8 +2081,8 @@ function openHero(slot){
       V.card.style.visibility="visible"; requestAnimationFrame(()=>{ V.flat.hidden=true; V.flat.getAnimations().forEach(a=>a.cancel()); });
       V.el.classList.add("ready");
       if(COARSE) setTimeout(()=>{ if(fan) heroSpread(); },120);   /* phones: the trio opens already apart */
-      setTimeout(hcGlint,COARSE?700:250);   /* the glint, as on every sheet with references, then every 7 s (5.5 s on phones) */
-      clearInterval(V.glintT); V.glintT=setInterval(()=>{ if(!vOpen||!fan){ clearInterval(V.glintT); return; } if(!fan.cards.some(c=>c.drag||c.hold||c.face!==0)&&!HC.on&&!vZooming&&!V.el.classList.contains("mking")&&!(window.SWP&&SWP.on)) hcGlint(); },COARSE?5500:7000);
+      setTimeout(hcGlint,COARSE?700:250);   /* the glint, as on every sheet with references, then every 5.5 s */
+      clearInterval(V.glintT); V.glintT=setInterval(()=>{ if(!vOpen||!fan){ clearInterval(V.glintT); return; } if(!fan.cards.some(c=>c.drag||c.hold||c.face!==0)&&!HC.on&&!vZooming&&!V.el.classList.contains("mking")&&!(window.SWP&&SWP.on)) hcGlint(); },5500);
     });
   });
   cancelAnimationFrame(vRaf); vRaf=requestAnimationFrame(vStep);
@@ -2118,7 +2121,7 @@ function zipSpiral(){
     if(t<1 && vOpen) requestAnimationFrame(f); else { g.clearRect(0,0,cv.width,cv.height); cv.style.display="none"; }
   })(t0);
 }
-function openSheet(slot){
+function openSheet(slot){ V.swirled=false;
   const day=slot.dataset.day; if(!day||vOpen) return;
   gcEv("dessin/"+(day.startsWith("21")?"21":day), "Dessin "+(day.startsWith("21")?"21":day)+" · "+(NAMES[day]||NAMES[day.slice(0,2)]||""));   /* analytics: which drawing is opened */
   showWLabel(null);
@@ -2145,7 +2148,7 @@ function openSheet(slot){
       V.card.animate([{opacity:0},{opacity:1}],{duration:reduce?1:260,easing:"ease-out"}).onfinish=()=>{ V.card.style.opacity="";
         V.flat.hidden=true; V.flat.style.filter=""; V.flat.getAnimations().forEach(a=>a.cancel()); };
       V.el.classList.add("ready"); V.card.focus({preventScroll:true}); mkPeekShow(true); setTimeout(hcGlint,250);
-      clearInterval(V.glintT); V.glintT=setInterval(()=>{ if(!vOpen||vDay!==day){ clearInterval(V.glintT); return; } if(M.face===0&&!M.drag&&!M.hold&&!HC.on&&!vZooming&&!V.el.classList.contains("mking")&&!(window.SWP&&SWP.on)) hcGlint(); },COARSE?5500:7000); };   /* the glint comes back every 7 s (5.5 s on phones), the press right after */
+      clearInterval(V.glintT); V.glintT=setInterval(()=>{ if(!vOpen||vDay!==day){ clearInterval(V.glintT); return; } if(M.face===0&&!M.drag&&!M.hold&&!HC.on&&!vZooming&&!V.el.classList.contains("mking")&&!(window.SWP&&SWP.on)) hcGlint(); },5500); };   /* the glint comes back every 7 s (5.5 s on phones), the press right after */
     ready.then(show); setTimeout(()=>{ flown&&show(); },2500);
     vFly({x:r.left,y:r.top,w:r.width,h:r.height}, vTarget(), 620, ()=>{ flown=true; if(!shown) vBusy(true);
       /* meanwhile the flat sheet sharpens to the full picture if it is ready */
@@ -2155,7 +2158,7 @@ function openSheet(slot){
 }
 function vBusy(on){ if(!window.curBusy||!!V._busy===on) return; V._busy=on; curBusy(on?1:-1); }
 function closeSheet(){
-  if(!vOpen||V.flat.getAnimations().length) return; vBusy(false); V.flat.style.filter="";
+  if(!vOpen||V.flat.getAnimations().length) return; pressKill(); vBusy(false); V.flat.style.filter="";
   if(M.hold){ M.hold=false; } mkHold(false); M.onHold=null; V.el.classList.remove("hasmk"); mkPeekShow(false);
   music(null); vLabel(null);
   const slot=vSlot, r=slot.getBoundingClientRect(), day=vDay;
@@ -2750,7 +2753,7 @@ if(matchMedia("(hover: hover) and (pointer: fine)").matches){
      the other hands at the palm — the same point for the open hand and the fist, so grabbing does not jump */
   const HOT={index:[0,12,12.5],hov:[2,6.5,11],crayon:[2,6.5,11],main:[3,32,28.2],poing:[4,31.8,28.2],peace:[5,32,28.2],metal:[6,31.8,28.2],surfeur:[7,32,28.2],pince:[8,20.5,33.5],tourbillon:[9,31.8,32]};
   let shown="", spinA=0, spinRaf=0, spinT=0;
-  const setCur=k=>{ if(k===shown) return; shown=k; if(k!=="pince"){ cur.style.removeProperty("--fx"); cur.style.removeProperty("--fy"); } cur.dataset.k=k; const h=HOT[k], old=layers[act]; act=1-act; const ci=layers[act];
+  const setCur=k=>{ if(k===shown) return; shown=k; if(k==="tourbillon") window.onSwirl&&setTimeout(onSwirl,60); if(k!=="pince"){ cur.style.removeProperty("--fx"); cur.style.removeProperty("--fy"); } cur.dataset.k=k; const h=HOT[k], old=layers[act]; act=1-act; const ci=layers[act];
     ci.style.backgroundPositionX=(-h[0]*64)+"px"; ci.style.translate=(-h[1])+"px "+(-h[2])+"px"; ci.style.transformOrigin=h[1]+"px "+h[2]+"px";
     ci.style.rotate=k==="peace"?"8deg":""; spinA=0;   /* the peace sign leans 8° to the right */ ci.classList.add("on"); old.classList.remove("on"); cur.classList.toggle("sw",k==="tourbillon"); cur.classList.toggle("hov",k==="hov"); };
   const spin=now=>{ const dt=Math.min(50,now-(spinT||now)); spinT=now; spinA+=dt*(0.09+HC.k*1.1+(HC.on?0.25:0)); layers[act].style.rotate=spinA.toFixed(1)+"deg";
