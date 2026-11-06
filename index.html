@@ -575,6 +575,11 @@ html.neg .viewer .vcap b{color:#151515} html.neg .viewer .vcap span{color:#4a474
 .room.walldone .sndmini.on ~ .zoom{margin-left:40px}
 /* cursor (mouse only): Nabil's hand-drawn hands, one picture (pages/cur.webp, nine 64 px cells at 2x), following the pointer */
 html.mcur,html.mcur *,html.mcur *::before,html.mcur *::after{cursor:none !important}
+.hwave{position:fixed;left:0;top:0;z-index:2500;pointer-events:none}   /* hold me: three rings from the centre of the drawing (phones) or from under the swirl (mouse) */
+.hwave i{position:absolute;left:0;top:0;width:var(--s);height:var(--s);margin:calc(var(--s) / -2) 0 0 calc(var(--s) / -2);border-radius:50%;
+  border:1.5px solid rgba(236,232,223,.9);box-shadow:0 0 0 1px rgba(20,18,16,.35),inset 0 0 0 1px rgba(20,18,16,.25);opacity:0;transform:scale(.12);animation:hwave 1.6s cubic-bezier(.2,.6,.3,1) forwards}
+.hwave i:nth-child(2){animation-delay:.28s} .hwave i:nth-child(3){animation-delay:.56s}
+@keyframes hwave{0%{opacity:0;transform:scale(.12)}12%{opacity:.85}100%{opacity:0;transform:scale(1.25)}}
 .cur{position:fixed;left:0;top:0;z-index:3000;width:64px;height:64px;pointer-events:none;opacity:0;transition:opacity .25s ease;will-change:transform;contain:layout style}   /* its own layer: moving it never repaints the page */
 .cur.on{opacity:1}
 html.vzoomed .cur{opacity:0 !important;transition:opacity .15s ease}
@@ -1804,7 +1809,14 @@ function hcGlint(){ if(reduce||!MAKING[vDay]) return; const e=hcShine(); e._d=nu
   e.style.width=vW+"px"; e.style.height=vH+"px"; e.style.marginLeft=(-vW/2)+"px"; e.style.marginTop=(-vH/2)+"px"; e.style.transform=hs?"translateY(-8px)":""; e.style.zIndex=fan?"4":"";
   const f=now=>{ if(HC.on||HC.k>0.001||!vOpen) return; const k=Math.min(1,(now-t0)/1100); e.style.backgroundPosition=shinePos(k); e.style.opacity=(0.3*Math.sin(k*Math.PI)).toFixed(3);
     if(k<1) requestAnimationFrame(f); else e.style.opacity="0"; };
-  requestAnimationFrame(f); }
+  requestAnimationFrame(f); setTimeout(hcWave,850); }   /* right after the glint, the rings */
+function hcWave(){ if(reduce||!vOpen||HC.on||vZooming||M.drag||M.hold||V.el.classList.contains("mking")) return;
+  if(fan && fan.cards.some(c=>c.drag||c.hold||c.face!==0)) return;
+  let p=null; if(COARSE){ const r=(fan?V.stage:V.card).getBoundingClientRect(); p=[r.left+r.width/2, r.top+r.height/2-(fan&&fan.spread?8:0)]; }   /* phones: the centre of the drawing */
+  else p=window.curSwirl&&curSwirl();   /* mouse: only under the swirl */
+  if(!p) return; const sz=Math.round(Math.min(vW,vH)*(COARSE?0.62:0.42)), w=document.createElement("div");
+  w.className="hwave"; w.style.transform=`translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px)`; w.style.setProperty("--s",sz+"px"); w.innerHTML="<i></i><i></i><i></i>";
+  document.body.appendChild(w); setTimeout(()=>w.remove(),2500); }
 function shineMask(){ return V.el.classList.contains("hero") ? "url(pages/21c-wall.webp)" : `url(pages/${vDay}-torn${COARSE?"-m":""}.webp)`; }
 function hcShine(){ let e=document.getElementById("vshine"); if(!e){ e=document.createElement("div"); e.id="vshine"; e.className="vshine"; V.stage.appendChild(e); } return e; }
 function hcDraw(){ if(!HC.sw){ const e=hcShine(), k=HC.k;
@@ -2017,8 +2029,8 @@ function openHero(slot){
       V.card.style.visibility="visible"; requestAnimationFrame(()=>{ V.flat.hidden=true; V.flat.getAnimations().forEach(a=>a.cancel()); });
       V.el.classList.add("ready");
       if(COARSE) setTimeout(()=>{ if(fan) heroSpread(); },120);   /* phones: the trio opens already apart */
-      setTimeout(hcGlint,COARSE?700:250);   /* the glint, as on every sheet with references, then every 8 s */
-      clearInterval(V.glintT); V.glintT=setInterval(()=>{ if(!vOpen||!fan){ clearInterval(V.glintT); return; } if(!fan.cards.some(c=>c.drag||c.hold||c.face!==0)&&!HC.on&&!vZooming&&!V.el.classList.contains("mking")&&!(window.SWP&&SWP.on)) hcGlint(); },8000);
+      setTimeout(hcGlint,COARSE?700:250);   /* the glint, as on every sheet with references, then every 7 s */
+      clearInterval(V.glintT); V.glintT=setInterval(()=>{ if(!vOpen||!fan){ clearInterval(V.glintT); return; } if(!fan.cards.some(c=>c.drag||c.hold||c.face!==0)&&!HC.on&&!vZooming&&!V.el.classList.contains("mking")&&!(window.SWP&&SWP.on)) hcGlint(); },7000);
     });
   });
   cancelAnimationFrame(vRaf); vRaf=requestAnimationFrame(vStep);
@@ -2084,7 +2096,7 @@ function openSheet(slot){
       V.card.animate([{opacity:0},{opacity:1}],{duration:reduce?1:260,easing:"ease-out"}).onfinish=()=>{ V.card.style.opacity="";
         V.flat.hidden=true; V.flat.style.filter=""; V.flat.getAnimations().forEach(a=>a.cancel()); };
       V.el.classList.add("ready"); V.card.focus({preventScroll:true}); mkPeekShow(true); setTimeout(hcGlint,250);
-      clearInterval(V.glintT); V.glintT=setInterval(()=>{ if(!vOpen||vDay!==day){ clearInterval(V.glintT); return; } if(M.face===0&&!M.drag&&!M.hold&&!HC.on&&!vZooming&&!V.el.classList.contains("mking")&&!(window.SWP&&SWP.on)) hcGlint(); },8000); };   /* the glint comes back every 8 s */
+      clearInterval(V.glintT); V.glintT=setInterval(()=>{ if(!vOpen||vDay!==day){ clearInterval(V.glintT); return; } if(M.face===0&&!M.drag&&!M.hold&&!HC.on&&!vZooming&&!V.el.classList.contains("mking")&&!(window.SWP&&SWP.on)) hcGlint(); },7000); };   /* the glint comes back every 7 s, the rings right after */
     ready.then(show); setTimeout(()=>{ flown&&show(); },2500);
     vFly({x:r.left,y:r.top,w:r.width,h:r.height}, vTarget(), 620, ()=>{ flown=true; if(!shown) vBusy(true);
       /* meanwhile the flat sheet sharpens to the full picture if it is ready */
@@ -2738,6 +2750,7 @@ if(matchMedia("(hover: hover) and (pointer: fine)").matches){
   addEventListener("pointerup",up,{passive:true}); addEventListener("pointercancel",up,{passive:true}); addEventListener("blur",up);
   document.documentElement.addEventListener("mouseleave",()=>cur.classList.remove("on"));
   window.curPick=pick; setCur("index"); pick();
+  window.curSwirl=()=> shown==="tourbillon"&&cur.classList.contains("on") ? [x,y] : null;   /* where the swirl is, for the rings */
   if(self.PROMO){ tx=x=innerWidth*0.62; ty=y=innerHeight*0.72; cur.style.transform=`translate3d(${x}px,${y}px,0)`; cur.classList.add("on"); }   /* the promo video: the hand is on screen from the very start, even before the mouse moves (a browser reports no position until it does) */
   window.curIntroGo=()=>{ if(curIntroGo.d||reduce) return; curIntroGo.d=true; curBusy(1); };   /* the loader turns from the sound choice until the first drawing has landed */
   window.curIntroDone=()=>{ self.__introDone=true; pick(); if(!curIntroGo.d||curIntroDone.d) return; curIntroDone.d=true; curBusy(-1); };
