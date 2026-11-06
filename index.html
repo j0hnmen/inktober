@@ -1843,13 +1843,15 @@ function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=press
     const {cv,gl}=P, d=Math.min(2,devicePixelRatio||1), hs=!!(fan&&fan.spread), dy=hs?-8:0;
     P.mode=mode; P.cx=cx; P.cy=cy; P.t0=-1; P.end=0;
     if(cv.width!==Math.round(vW*d)||cv.height!==Math.round(vH*d)){ cv.width=Math.round(vW*d); cv.height=Math.round(vH*d); }
-    cv.style.cssText=`position:absolute;left:50%;top:50%;width:${vW}px;height:${vH}px;margin:${-vH/2+dy}px 0 0 ${-vW/2}px;z-index:${fan?5:3};pointer-events:none;visibility:hidden`;
-    gl.viewport(0,0,cv.width,cv.height); gl.uniform1f(P.asp,vW/vH); if(!cv.isConnected) V.stage.appendChild(cv);
+    const host=fan?V.stage:V.card;   /* a single sheet: the canvas lives inside the card itself, a hair in front of its paper, so it moves with it (no copying, nothing for Safari to sort) */
+    cv.style.cssText=fan?`position:absolute;left:50%;top:50%;width:${vW}px;height:${vH}px;margin:${-vH/2+dy}px 0 0 ${-vW/2}px;z-index:5;pointer-events:none;visibility:hidden`
+      :`position:absolute;left:0;top:0;width:100%;height:100%;transform:translateZ(1px);pointer-events:none;visibility:hidden`;
+    gl.viewport(0,0,cv.width,cv.height); gl.uniform1f(P.asp,vW/vH); if(cv.parentNode!==host) host.appendChild(cv);
     cancelAnimationFrame(P.raf); cancelAnimationFrame(PFr); let last=performance.now();
     const f=now=>{ const dt=now-last; last=now;
       const stop=!vOpen||vZooming||(P.mode==="wave"?(HC.on||M.drag||M.hold||(fan&&fan.cards.some(c=>c.drag||c.hold))):(HC.sw||(!HC.on&&HC.k<=0.001)||M.hold));
       if(stop){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }   /* the paper is the drawing again, and its strips may float again */
-      if(!fan){ PF=Math.min(1,PF+dt/250); cv.style.transform=V.card.style.transform+" translateZ(.5px)";   /* a hair in front of the card: Safari sorts 3D planes by depth, so at the same depth the canvas could end up hidden behind it */ }   /* the strips settle flat first (a quarter second), then the press shows */
+      if(!fan) PF=Math.min(1,PF+dt/250);   /* the strips settle flat first (a quarter second), then the press shows */
       if(!fan&&PF<1){ P.raf=requestAnimationFrame(f); return; }
       if(P.t0<0) P.t0=now; cv.style.visibility="visible";
       const t=(now-P.t0)/1000; if(P.mode==="wave"&&t>2.6){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }
