@@ -1865,7 +1865,7 @@ function pressRun(mode,cx,cy,under){ const P=pressGL(); if(!P) return; const src
 function pressKill(){ if(!PR) return; cancelAnimationFrame(PR.raf); PR.raf=0; PR.mode=""; PR.cv.remove(); cancelAnimationFrame(PFr); PF=0; }   /* leaving the sheet: the press goes at once, nothing stays on screen */
 function pressAt(x,y,mode="wave"){   /* held (finger or mouse): the press runs out from under it, and goes on through the hold */
   if(reduce||!vOpen||V.el.classList.contains("mking")) return; const r=V.card.getBoundingClientRect(); if(!r.width) return;
-  const cx=(x-r.left)/r.width, cy=(y-r.top)/r.height; if(cx<0||cx>1||cy<0||cy>1) return; if(PR&&PR.mode) PR.mode=""; pressRun(mode,cx,cy); }
+  const cx=(x-r.left)/r.width, cy=(y-r.top)/r.height; if(cx<0||cx>1||cy<0||cy>1) return; if(PR&&PR.mode) PR.mode=""; pressRun(mode,cx,cy,!COARSE); }   /* mouse: the swirl is right there, so its rings follow */
 function hcWave(){ if(reduce||!vOpen||HC.on||vZooming||M.drag||M.hold||V.el.classList.contains("mking")) return;
   if(fan && fan.cards.some(c=>c.drag||c.hold||c.face!==0)) return;
   const P=pressGL(); if(!P||P.mode) return;
