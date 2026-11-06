@@ -366,6 +366,7 @@ html.neg .viewer .vbg,html.neg .viewer .vcard .f,html.neg .viewer .vcard .b,html
 
 html.neg .viewer .vbg{background:rgba(236,236,234,.92)}
 html.neg .viewer.mys .vcard .f,html.neg .viewer.mys .vcard .b,html.neg .viewer .vclose,html.neg .viewer .vhint{filter:invert(1) grayscale(1)}
+html.neg .viewer.mys .vcard canvas.vpress,.room.neg .slot[data-day="10"] canvas.vpress{filter:invert(1) grayscale(1)}   /* Mystical: the press is drawn from the positive scan, so it goes negative with the sheet */
 /* "pull to the right": a small cue on the sheet until the first one is torn */
 .hint{position:absolute;z-index:350;left:735px;top:471px;width:210px;height:92px;display:flex;align-items:center;justify-content:center;
   pointer-events:none;color:#141312;opacity:0;transition:opacity .6s ease}   /* black chevrons on the sheet's right edge, half out of the notebook */
