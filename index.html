@@ -674,6 +674,8 @@ function logoBox(){   /* the notebook logo's place in the room, from the layout 
   return logoBox.v={t:Math.round(y), h:Math.round(lg.offsetHeight)};
 }
 /* the drawings not yet torn out, as faint ghosts on the wall while the gallery button is hovered (small copies, made once) */
+/* the gallery button comes with the first tear, or 5 s after Apple has landed if nobody has torn anything yet */
+function galBtnSoon(){ setTimeout(()=>{ if(introOn||room.classList.contains("galbtn")||room.classList.contains("walldone")) return; room.classList.add("galbtn"); if(!COARSE) galGhosts(); },5000); }
 function galGhosts(){ if(room.classList.contains("walldone")) return;
   slots.forEach((sl,i)=>{ if(sl.querySelector("img")) return; const im=new Image(); const src=i===20?"pages/21c-wall-c.webp":wallSrc(String(i+1).padStart(2,"0")); im.alt=""; im.className="ghost"; im.src=src; sl.appendChild(im); }); }
 function placeWall(){
@@ -2558,7 +2560,7 @@ function intro(){
       setTimeout(()=>{ room.classList.remove("opening"); head.style.transition=""; room.classList.add("galon"); },1100);
       labelsEl.style.opacity=1;
       if(curLabel){ curLabel.getBoundingClientRect(); curLabel.style.transition="transform .7s cubic-bezier(.2,.7,.2,1) .1s"; curLabel.style.transform="translate(-50%,0)"; }
-      introOn=false; gate.style.display="none"; window.curIntroDone&&curIntroDone(); if(stack.length) music(stack[0].dataset.day);   /* the first drawing has landed: its music starts (or goes on) */
+      introOn=false; gate.style.display="none"; window.curIntroDone&&curIntroDone(); galBtnSoon(); if(stack.length) music(stack[0].dataset.day);   /* the first drawing has landed: its music starts (or goes on) */
       if(soundOn!==true) setTimeout(()=>{ if(soundOn!==true) mutedTrack(wantDay||(stack[0]&&stack[0].dataset.day)); },900);   /* entered without sound: the small speaker stays at the bottom left */
       hintStart();
       /* hand over to the real sheet only once its picture is decoded, so the fade shows the same image */
@@ -2700,7 +2702,7 @@ snd.addEventListener("keydown",e=>{ if(e.key==="ArrowDown"||e.key==="Escape"){ e
 snd.addEventListener("click",e=>{ if(e.detail===0) sndActivate(); });   /* keyboard (Enter / Space) */
 sndMini.addEventListener("click",()=>{ sndActivate(); });
 intro();
-if(!introOn){ document.querySelector(".head").style.opacity=""; room.classList.add("galon"); setTimeout(sndShow,800); grainGo=true; grainTry(); }
+if(!introOn){ document.querySelector(".head").style.opacity=""; room.classList.add("galon"); galBtnSoon(); setTimeout(sndShow,800); grainGo=true; grainTry(); }
 /* hover: the top sheet leans out to the right a little */
 if(!COARSE && !reduce){
   const peek=on=>{ const p=stack[0]; pagesEl.querySelectorAll(".page.peek").forEach(q=>{ if(q._live) return; if(!on||q!==p) q.classList.remove("peek"); });
