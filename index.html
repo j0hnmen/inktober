@@ -476,7 +476,7 @@ html.neg .viewer .vcap b{color:#151515} html.neg .viewer .vcap span{color:#4a474
 .room.galgo .reset.gal{opacity:0 !important;pointer-events:none !important;transition:opacity .3s ease}
 /* hovering it: the drawings already on the wall behind come up to full strength */
 .room.galpeek:not(.walldone) .slot img.on{filter:none;transition:opacity .6s ease, filter .6s ease}
-.slot img.ghost{opacity:0;transform:none;filter:none} .room.galpeek:not(.walldone) .slot img.ghost{opacity:.12}   /* hovering the gallery button: the drawings still in the notebook show faintly in their places */
+.slot img.ghost{opacity:0;transform:none;filter:none} .room.galpeek:not(.walldone) .slot img.ghost{opacity:.15}   /* hovering the gallery button: the drawings still in the notebook show faintly in their places */
 @media (min-width:601px){ .reset.gal{right:80px;bottom:39px} }   /* computer: more room round the edges */
 .room .book{transition:transform .9s cubic-bezier(.3,.7,.2,1), filter .5s ease} .room.galpeek:not(.neg) .book{filter:brightness(.65)}   /* the notebook steps back a little while the wall comes up */
 .reset.gal{opacity:0;pointer-events:none;transform:translateX(48px);transition:opacity .8s ease, transform .9s cubic-bezier(.2,.8,.25,1), box-shadow .25s ease, color .2s ease}   /* from the right */   /* not on the way in (logo and sound buttons): it comes with the notebook */
@@ -674,7 +674,7 @@ function logoBox(){   /* the notebook logo's place in the room, from the layout 
 }
 /* the drawings not yet torn out, as faint ghosts on the wall while the gallery button is hovered (small copies, made once) */
 function galGhosts(){ if(room.classList.contains("walldone")) return;
-  slots.forEach((sl,i)=>{ if(sl.querySelector("img")) return; const d=String(i+1).padStart(2,"0"); const im=new Image(); im.alt=""; im.className="ghost"; im.src=wallSrc(d); sl.appendChild(im); }); }
+  slots.forEach((sl,i)=>{ if(sl.querySelector("img")) return; const d=i===20?"21a":String(i+1).padStart(2,"0"); const im=new Image(); im.alt=""; im.className="ghost"; im.src=wallSrc(d); sl.appendChild(im); }); }
 function placeWall(){
   const W=wallgrid.clientWidth, H=wallgrid.clientHeight;
   /* computer: 8 + 8 + 8 + 7. Phone (portrait): 4 columns, 7 full rows and a centred last row of 3, filling the screen */
@@ -763,7 +763,7 @@ let gen=0;
 function reveal(day,g){
   if(g!==gen) return;
   const s=slots[parseInt(day,10)-1]; if(!s) return;
-  document.querySelector(".room").classList.add("galbtn");   /* the first tear: the gallery button comes in */
+  if(!room.classList.contains("galbtn")){ room.classList.add("galbtn"); if(!COARSE) galGhosts(); }   /* the first tear: the gallery button comes in (and the ghosts are readied, so the first hover fades like the others) */
   /* Hero's second and third sheets bring a pre-merged image (the sketches laid over each other), which cross-fades over the previous one */
   if(!s.dataset.day) s.dataset.day=day;   /* the sheet this slot opens (Hero: its first sketch) */
   if(window.MAKING && MAKING[day] && !s.classList.contains("hasmk")){ s.classList.add("hasmk"); }
@@ -910,7 +910,7 @@ let stack=[]; window.__stackReady=true;
 function build(){
   pagesEl.innerHTML=""; book.querySelectorAll(".page.flyer,.glite.mf,.psh,.fall").forEach(e=>e.remove()); remList.forEach(e=>dropSrc(e.img)); remList.length=0; drawRems(); stack=[]; labelsEl.innerHTML=""; curLabel=null;
   { const k=document.getElementById("bk"), ks=document.getElementById("bksh"); k.style.transform=""; k.style.visibility=""; ks.style.opacity=0; }
-  book.style.removeProperty("--gone"); room.classList.remove("headout"); gen++; slots.forEach(s=>{ s.innerHTML=""; delete s.dataset.day; s.classList.remove("lifted","hasmk","hasmo"); }); room.classList.remove("wallive"); book.classList.remove("gone"); document.querySelector(".room").classList.remove("walldone");
+  book.style.removeProperty("--gone"); room.classList.remove("headout","galbtn"); gen++; slots.forEach(s=>{ s.innerHTML=""; delete s.dataset.day; s.classList.remove("lifted","hasmk","hasmo"); }); room.classList.remove("wallive"); book.classList.remove("gone"); document.querySelector(".room").classList.remove("walldone");
   DAYS.slice().reverse().forEach(d=>{
     const p=document.createElement("div"); p.className="page"; p.dataset.day=d;
     p.innerHTML=`<div class="cw"><img class="clean" alt=""></div><div class="tw"><img class="torn" alt=""></div><div class="g"><div class="band"></div></div>`;
@@ -2847,7 +2847,7 @@ if(matchMedia("(hover: hover) and (pointer: fine)").matches){
     r.setAttribute("x",(cx-tw/2).toFixed(2)); r.setAttribute("y",(cy-th/2).toFixed(2)); r.setAttribute("width",tw); r.setAttribute("height",th); r.setAttribute("rx","1.3");
     r.setAttribute("fill","none"); r.setAttribute("stroke","currentColor"); r.setAttribute("stroke-width","1.7");
     r.style.setProperty("--d",(Math.hypot(i,j*1.2)*0.045).toFixed(3)+"s"); sv.appendChild(r); }   /* from the middle outwards */
-  tg.prepend(sv); tg.addEventListener("pointerenter",e=>{ if(e.pointerType==="mouse"){ galGhosts(); room.classList.add("galpeek"); galPull(true); } }); tg.addEventListener("pointerleave",()=>{ room.classList.remove("galpeek"); galPull(false); }); tg.addEventListener("pointerdown",()=>{ room.classList.remove("galpeek"); galPull(false,true); }); }
+  tg.prepend(sv); tg.addEventListener("pointerenter",e=>{ if(e.pointerType==="mouse"){ galGhosts(); void wallgrid.offsetWidth; room.classList.add("galpeek"); galPull(true); } }); tg.addEventListener("pointerleave",()=>{ room.classList.remove("galpeek"); galPull(false); }); tg.addEventListener("pointerdown",()=>{ room.classList.remove("galpeek"); galPull(false,true); }); }
 /* hovering the gallery button: the top sheet is pulled to the right and held there (as if about to go), back when the mouse leaves */
 let gpRaf=0, gpX=0, gpHint=false, gpP=null;
 function galPull(on,now){
