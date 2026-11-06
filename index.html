@@ -1595,7 +1595,7 @@ function makeCard(el, sh){
   };
   C.step=()=>{
     if(!C.drag){ const k=reduce?1:0.085; const ny=C.ry+(C.target-C.ry)*k; C.vy=ny-C.ry; C.ry=ny; C.rx+=(0-C.rx)*k; }
-    if(C.handled&&!C.drag&&Math.abs(C.target-C.ry)<3&&Math.abs(C.rx)<3){ C.handled=false; if(COARSE&&C===window.__M&&!fan&&C.face===0) setTimeout(hcWave,120); }   /* phones: the sheet is back at rest on its front: the press, from the centre */
+    if(C.handled&&!C.drag&&Math.abs(C.target-C.ry)<3&&Math.abs(C.rx)<3){ C.handled=false; if(C===window.__M&&!fan&&C.face===0) setTimeout(hcWave,120); }   /* the sheet is back at rest on its front: the press (phones: from the centre; mouse: under the swirl, or from the centre) */
     /* hover tilt: always eased towards where the mouse is (or back to flat when it leaves), never set at once */
     { const h=C.drag||C.hold||performance.now()<(C.calm||0); C.tx+=((h?0:(C.htx||0))-C.tx)*0.045; C.ty+=((h?0:(C.hty||0))-C.ty)*0.045; }
     C.flash*=.93;
