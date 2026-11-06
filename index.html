@@ -1619,12 +1619,12 @@ function makeCard(el, sh){
       const r=el.getBoundingClientRect(); C.hty=Math.max(-8,Math.min(8,((e.clientX-r.left)/r.width-.5)*16)); C.htx=Math.max(-6,Math.min(6,-((e.clientY-r.top)/r.height-.5)*12));
     }
   });
-  const end=()=>{
+  const end=e=>{
     clearTimeout(C.holdT); hcStop();
     if(!C.drag) return; el.classList.remove("dragging"); C.drag=null; window.curPick&&setTimeout(curPick,0);
     if(C.hold){ C.hold=false; C.ry=C.target=C.base; return; }   /* the making of stays on after the hold; another hold turns it off */
     const off=C.ry-C.base, dir=Math.sign(off)||1;
-    if(C.face===0){ if(!C.moved){ if(C.onTap) C.onTap(); return; } C.settle((Math.abs(off)>75||(Math.abs(off)>35&&Math.abs(C.speed)>0.4))?1:0,dir); }
+    if(C.face===0){ if(!C.moved){ if(e&&e.type==="pointerup"&&e.pointerType==="mouse"&&C===window.__M&&!fan) pressAt(e.clientX,e.clientY); if(C.onTap) C.onTap(); return; }   /* a click on the drawing (mouse): the press runs out from there */ C.settle((Math.abs(off)>75||(Math.abs(off)>35&&Math.abs(C.speed)>0.4))?1:0,dir); }
     else { if(!C.moved||Math.abs(off)>6||Math.abs(C.speed)>.15) C.settle(0,dir); else C.settle(1); }
   };
   el.addEventListener("pointerup",end); el.addEventListener("pointercancel",end);
@@ -1865,6 +1865,8 @@ function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=press
 /* the first time the swirl shows on an open sheet, the press comes at once under it (desktop) */
 window.onSwirl=()=>{ if(!vOpen||V.swirled||!(window.curSwirl&&curSwirl())) return; V.swirled=true; if(PR&&PR.mode==="wave") PR.mode=""; hcWave(); };   /* a press already running starts again under the swirl */
 function pressKill(){ if(!PR) return; cancelAnimationFrame(PR.raf); PR.raf=0; PR.mode=""; PR.cv.remove(); cancelAnimationFrame(PFr); PF=0; }   /* leaving the sheet: the press goes at once, nothing stays on screen */
+function pressAt(x,y){ if(reduce||!vOpen||V.el.classList.contains("mking")) return; const r=V.card.getBoundingClientRect(); if(!r.width) return;
+  const cx=(x-r.left)/r.width, cy=(y-r.top)/r.height; if(cx<0||cx>1||cy<0||cy>1) return; if(PR&&PR.mode) PR.mode=""; pressRun("wave",cx,cy); }
 function hcWave(){ if(reduce||!vOpen||HC.on||vZooming||M.drag||M.hold||V.el.classList.contains("mking")) return;
   if(fan && fan.cards.some(c=>c.drag||c.hold||c.face!==0)) return;
   const P=pressGL(); if(!P||P.mode) return;
