@@ -1871,10 +1871,10 @@ function pressRun(mode,cx,cy,under){ const P=pressGL(); if(!P) return; const src
     const c2=document.createElement("canvas"); c2.width=W; c2.height=H; const x=c2.getContext("2d"); x.imageSmoothingEnabled=true; x.imageSmoothingQuality="high"; x.drawImage(im,0,0,W,H);
     P.gl.texImage2D(P.gl.TEXTURE_2D,0,P.gl.RGBA,P.gl.RGBA,P.gl.UNSIGNED_BYTE,c2); P.src=key; go(); }; im.src=src; } }
 function pressKill(){ if(!PR) return; cancelAnimationFrame(PR.raf); PR.raf=0; PR.mode=""; PR.cv.remove(); cancelAnimationFrame(PFr); PF=0; }   /* leaving the sheet: the press goes at once, nothing stays on screen */
-function pressAt(x,y,mode="wave"){   /* held (finger or mouse): the press runs out from under it, and goes on through the hold */
+function pressAt(x,y,mode="wave"){ if(vDay==="10") return;   /* (no press on Mystical: its negative) */   /* held (finger or mouse): the press runs out from under it, and goes on through the hold */
   if(reduce||!vOpen||V.el.classList.contains("mking")) return; const r=V.card.getBoundingClientRect(); if(!r.width) return;
   const cx=(x-r.left)/r.width, cy=(y-r.top)/r.height; if(cx<0||cx>1||cy<0||cy>1) return; if(PR&&PR.mode) PR.mode=""; pressRun(mode,cx,cy,!COARSE); }   /* mouse: the swirl is right there, so its rings follow */
-function hcWave(){ if(reduce||!vOpen||fan||HC.on||vZooming||M.drag||M.hold||V.el.classList.contains("mking")) return;   /* (no press on Hero: three sheets, the fan) */
+function hcWave(){ if(reduce||!vOpen||fan||vDay==="10"||HC.on||vZooming||M.drag||M.hold||V.el.classList.contains("mking")) return;   /* (no press on Hero: three sheets, the fan) */
   const P=pressGL(); if(!P||P.mode) return;
   const hs=!!(fan&&fan.spread), dy=hs?-8:0, r=V.stage.getBoundingClientRect(), L=r.left+r.width/2-vW/2, T=r.top+r.height/2-vH/2+dy;
   let cx=.5, cy=.5, under=false; if(!COARSE){ const q=window.curSwirl&&curSwirl(); if(q){ const x=(q[0]-L)/vW, y=(q[1]-T)/vH; if(x>=0&&x<=1&&y>=0&&y<=1){ cx=x; cy=y; under=true; } } }   /* mouse: under the swirl when it shows, from the centre otherwise */
@@ -2242,7 +2242,7 @@ function waveStart(slot){
   })(performance.now());
 }
 /* gallery hover: the same press as on the open sheet, from the centre, drawn inside the floating paper (its strips held flat meanwhile) */
-function galPress(W,src){ if(reduce||vOpen||wave!==W||W.out||!W.slot.classList.contains("hasmk")) return;   /* only the drawings with references, as in the viewer */ const P=pressGL(); if(!P||P.mode) return;
+function galPress(W,src){ if(reduce||vOpen||wave!==W||W.out||!W.slot.classList.contains("hasmk")||W.slot.dataset.day==="10") return;   /* (not Mystical: its negative) */   /* only the drawings with references, as in the viewer */ const P=pressGL(); if(!P||P.mode) return;
   const d=Math.min(2,devicePixelRatio||1), w=W.slot.clientWidth, h=W.slot.clientHeight, Wp=Math.round(w*d), Hp=Math.round(h*d), key=src+"@"+Wp;
   const go=()=>{ if(vOpen||wave!==W||W.out||P.mode) return; const {cv,gl}=P;
     P.mode="gal"; P.cx=.5; P.cy=.5; P.under=false; W.press=true;
