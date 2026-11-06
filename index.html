@@ -1624,7 +1624,7 @@ function makeCard(el, sh){
     if(!C.drag) return; el.classList.remove("dragging"); C.drag=null; window.curPick&&setTimeout(curPick,0);
     if(C.hold){ C.hold=false; C.ry=C.target=C.base; return; }   /* the making of stays on after the hold; another hold turns it off */
     const off=C.ry-C.base, dir=Math.sign(off)||1;
-    if(C.face===0){ if(!C.moved){ if(e&&e.type==="pointerup"&&e.pointerType==="mouse"&&C===window.__M&&!fan) pressAt(e.clientX,e.clientY); if(C.onTap) C.onTap(); return; }   /* a click on the drawing (mouse): the press runs out from there */ C.settle((Math.abs(off)>75||(Math.abs(off)>35&&Math.abs(C.speed)>0.4))?1:0,dir); }
+    if(C.face===0){ if(!C.moved){ if(C.onTap) C.onTap(); return; } C.settle((Math.abs(off)>75||(Math.abs(off)>35&&Math.abs(C.speed)>0.4))?1:0,dir); }
     else { if(!C.moved||Math.abs(off)>6||Math.abs(C.speed)>.15) C.settle(0,dir); else C.settle(1); }
   };
   el.addEventListener("pointerup",end); el.addEventListener("pointercancel",end);
@@ -1836,10 +1836,10 @@ function pressGL(){ if(PR!==null) return PR; PR=false;
     PR={cv,gl,c:gl.getUniformLocation(pr,"c"),t:gl.getUniformLocation(pr,"t"),hk:gl.getUniformLocation(pr,"hk"),asp:gl.getUniformLocation(pr,"asp"),raf:0,src:"",mode:""};
   }catch(e){ PR=false; } return PR; }
 function pressSrc(){ if(fan&&fan.spread) return `pages/${HERO[fan.front]}-torn${COARSE?"-m":""}.webp`; if(fan) return "pages/21c-wall.webp";
-  const m=/url\(["']?([^"')]+)/.exec(V.card.style.getPropertyValue("--rf")||""); return m?m[1]:`pages/${vDay}-torn${COARSE?"-m":""}.webp`; }   /* the very picture the card shows */
+  const m=/url\(["']?([^"')]+)/.exec(V.card.style.getPropertyValue("--rf")||""); return m?m[1].replace(/\\/g,""):`pages/${vDay}-torn${COARSE?"-m":""}.webp`; }   /* the very picture the card shows */
 function pressFlatBack(){ cancelAnimationFrame(PFr); let l=performance.now(); const f=now=>{ PF=Math.max(0,PF-(now-l)/350); l=now; if(PF>0) PFr=requestAnimationFrame(f); }; PFr=requestAnimationFrame(f); }
 function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=pressSrc(), go=()=>{
-    if(!vOpen||(mode==="wave"&&(HC.on||M.drag||M.hold))||(mode==="hold"&&!HC.on)) return;
+    if(!vOpen||(mode==="wave"&&(HC.on||M.drag||M.hold))) return;
     const {cv,gl}=P, d=Math.min(2,devicePixelRatio||1), hs=!!(fan&&fan.spread), dy=hs?-8:0;
     P.mode=mode; P.cx=cx; P.cy=cy; P.t0=-1; P.end=0;
     if(cv.width!==Math.round(vW*d)||cv.height!==Math.round(vH*d)){ cv.width=Math.round(vW*d); cv.height=Math.round(vH*d); }
@@ -1849,13 +1849,13 @@ function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=press
     gl.viewport(0,0,cv.width,cv.height); gl.uniform1f(P.asp,vW/vH); if(cv.parentNode!==host) host.appendChild(cv);
     cancelAnimationFrame(P.raf); cancelAnimationFrame(PFr); let last=performance.now();
     const f=now=>{ const dt=now-last; last=now;
-      const stop=!vOpen||vZooming||(P.mode==="wave"?(HC.on||M.drag||M.hold||(fan&&fan.cards.some(c=>c.drag||c.hold))):(HC.sw||(!HC.on&&HC.k<=0.001)||M.hold));
+      const stop=!vOpen||vZooming||(P.mode==="wave"?(HC.on||M.drag||M.hold||(fan&&fan.cards.some(c=>c.drag||c.hold))):(M.drag&&M.moved));
       if(stop){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }   /* the paper is the drawing again, and its strips may float again */
       if(!fan) PF=Math.min(1,PF+dt/250);   /* the strips settle flat first (a quarter second), then the press shows */
       if(!fan&&PF<1){ P.raf=requestAnimationFrame(f); return; }
       if(P.t0<0) P.t0=now; cv.style.visibility="visible";
-      const t=(now-P.t0)/1000; if(P.mode==="wave"&&t>2.6){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }
-      gl.uniform2f(P.c,P.cx,P.cy); gl.uniform1f(P.t,P.mode==="wave"?t:9.); gl.uniform1f(P.hk,P.mode==="hold"?Math.pow(HC.k,1.15):0.);
+      const t=(now-P.t0)/1000; if(t>2.6){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }
+      gl.uniform2f(P.c,P.cx,P.cy); gl.uniform1f(P.t,t); gl.uniform1f(P.hk,0.);
       gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); P.raf=requestAnimationFrame(f); };
     P.raf=requestAnimationFrame(f); };
   const d=Math.min(2,devicePixelRatio||1), W=Math.round(vW*d), H=Math.round(vH*d), key=src+"@"+W;
@@ -1865,8 +1865,9 @@ function pressRun(mode,cx,cy){ const P=pressGL(); if(!P) return; const src=press
 /* the first time the swirl shows on an open sheet, the press comes at once under it (desktop) */
 window.onSwirl=()=>{ if(!vOpen||V.swirled||!(window.curSwirl&&curSwirl())) return; V.swirled=true; if(PR&&PR.mode==="wave") PR.mode=""; hcWave(); };   /* a press already running starts again under the swirl */
 function pressKill(){ if(!PR) return; cancelAnimationFrame(PR.raf); PR.raf=0; PR.mode=""; PR.cv.remove(); cancelAnimationFrame(PFr); PF=0; }   /* leaving the sheet: the press goes at once, nothing stays on screen */
-function pressAt(x,y){ if(reduce||!vOpen||V.el.classList.contains("mking")) return; const r=V.card.getBoundingClientRect(); if(!r.width) return;
-  const cx=(x-r.left)/r.width, cy=(y-r.top)/r.height; if(cx<0||cx>1||cy<0||cy>1) return; if(PR&&PR.mode) PR.mode=""; pressRun("wave",cx,cy); }
+function pressAt(x,y,mode="wave"){   /* mouse held on the drawing: the press runs out from under it, and goes on through the hold */
+  if(reduce||!vOpen||V.el.classList.contains("mking")) return; const r=V.card.getBoundingClientRect(); if(!r.width) return;
+  const cx=(x-r.left)/r.width, cy=(y-r.top)/r.height; if(cx<0||cx>1||cy<0||cy>1) return; if(PR&&PR.mode) PR.mode=""; pressRun(mode,cx,cy); }
 function hcWave(){ if(reduce||!vOpen||HC.on||vZooming||M.drag||M.hold||V.el.classList.contains("mking")) return;
   if(fan && fan.cards.some(c=>c.drag||c.hold||c.face!==0)) return;
   const P=pressGL(); if(!P||P.mode) return;
@@ -1886,7 +1887,7 @@ function hcDraw(){ if(!HC.sw){ const e=hcShine(), k=HC.k;
   const h=hcEl(), k=HC.k, g=Math.pow(k,0.8);   /* shows early and keeps swelling to the very end */
   h.style.width=(vW*1.5).toFixed(0)+"px"; h.style.height=(vH*1.4).toFixed(0)+"px";
   h.style.transform=`translate3d(${HC.x.toFixed(1)}px,${HC.y.toFixed(1)}px,0) translate(-50%,-50%) scale(${(0.12+0.88*g).toFixed(3)})`; h.style.opacity=(Math.min(1,k*1.8)*0.62).toFixed(3); }
-function hcStart(x,y,done){ { const r=V.stage.getBoundingClientRect(); x=r.left+r.width/2; y=r.top+r.height/2; } HC.x=x; HC.y=y; HC.done=done; HC.on=true; HC.t0=performance.now()-HC.k*1700; cancelAnimationFrame(HC.raf);
+function hcStart(x,y,done){ if(!COARSE&&!fan) pressAt(x,y,"hold"); { const r=V.stage.getBoundingClientRect(); x=r.left+r.width/2; y=r.top+r.height/2; } HC.x=x; HC.y=y; HC.done=done; HC.on=true; HC.t0=performance.now()-HC.k*1700; cancelAnimationFrame(HC.raf);
   const f=now=>{ if(!HC.on) return; const u=Math.min(1,(now-HC.t0)/1700); HC.k=u; hcDraw();
     if(u<1){ HC.raf=requestAnimationFrame(f); return; }
     HC.on=false; HC.sw=true; const ok=HC.done&&HC.done(); if(!ok) HC.sw=false; HC.done=null; hcFade(ok?380:220); };
