@@ -476,9 +476,9 @@ html.neg .viewer .vcap b{color:#151515} html.neg .viewer .vcap span{color:#4a474
 .room.galgo .reset.gal{opacity:0 !important;pointer-events:none !important;transition:opacity .3s ease}
 /* hovering it: the drawings already on the wall behind come up to full strength */
 .room.galpeek:not(.walldone) .slot img.on{filter:none;transition:opacity .6s ease, filter .6s ease}
-.slot img.ghost{opacity:0;transform:none;filter:none} .room.galpeek:not(.walldone) .slot img.ghost{opacity:.15}   /* hovering the gallery button: the drawings still in the notebook show faintly in their places */
+.slot img.ghost{opacity:0;transform:none;filter:none} .room.galpeek:not(.walldone) .slot img.ghost{opacity:.12}   /* hovering the gallery button: the drawings still in the notebook show faintly in their places */
 @media (min-width:601px){ .reset.gal{right:80px;bottom:39px} }   /* computer: more room round the edges */
-.room .book{transition:transform .9s cubic-bezier(.3,.7,.2,1), filter .5s ease} .room.galpeek:not(.neg) .book{filter:brightness(.65)}   /* the notebook steps back a little while the wall comes up */
+.room .book{transition:transform .9s cubic-bezier(.3,.7,.2,1), filter .5s ease} .room.galpeek:not(.neg) .book{filter:brightness(.72)}   /* the notebook steps back a little while the wall comes up */
 .reset.gal{opacity:0;pointer-events:none;transform:translateX(48px);transition:opacity .8s ease, transform .9s cubic-bezier(.2,.8,.25,1), box-shadow .25s ease, color .2s ease}   /* from the right */   /* not on the way in (logo and sound buttons): it comes with the notebook */
 .room.galon.galbtn .reset.gal{opacity:1;pointer-events:auto;transform:none}   /* only once the first sheet (Apple) has been torn out */
 .reset:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
@@ -674,7 +674,7 @@ function logoBox(){   /* the notebook logo's place in the room, from the layout 
 }
 /* the drawings not yet torn out, as faint ghosts on the wall while the gallery button is hovered (small copies, made once) */
 function galGhosts(){ if(room.classList.contains("walldone")) return;
-  slots.forEach((sl,i)=>{ if(sl.querySelector("img")) return; const d=i===20?"21a":String(i+1).padStart(2,"0"); const im=new Image(); im.alt=""; im.className="ghost"; im.src=wallSrc(d); sl.appendChild(im); }); }
+  slots.forEach((sl,i)=>{ if(sl.querySelector("img")) return; const im=new Image(); const src=i===20?"pages/21c-wall-c.webp":wallSrc(String(i+1).padStart(2,"0")); im.alt=""; im.className="ghost"; im.src=src; sl.appendChild(im); }); }
 function placeWall(){
   const W=wallgrid.clientWidth, H=wallgrid.clientHeight;
   /* computer: 8 + 8 + 8 + 7. Phone (portrait): 4 columns, 7 full rows and a centred last row of 3, filling the screen */
