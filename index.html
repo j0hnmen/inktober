@@ -2466,7 +2466,9 @@ function intro(){
     /* start times: the first sheet alone (it covers the logo), then an even beat, the last five spread out so the end breathes */
     const FLY=1050, FIRST=FLY;   /* every sheet flies in one stream, the first with the others (no solo, no pause) */
     const starts=[0]; let t=95;
-    for(let k=1;k<=n;k++){ starts.push(t); const left=n-k; t+= left<5 ? 120+ (5-left)*70 : (COARSE?140:95); }   /* phones: a slower beat, so fewer sheets are in the air at once */
+    for(let k=1;k<=n;k++){ starts.push(t); const left=n-k;
+      t+= COARSE ? (left<5 ? 120+(5-left)*70 : 140)   /* phones: a slow even beat (fewer sheets in the air at once: memory) */
+                 : 50+310*Math.pow(k/n,2.6); }   /* computer: quick at first, then it slows down steadily to the last sheets */
     const t0=performance.now();
     { const landAt=t0+starts[n]+FLY*1.25-500;   /* with sound: the music comes in over the last 2.7 s of the flight, 0:07 (the melody) as Apple is seen to land (0.5 s before the flight's very end) */
       setTimeout(function early(){ if(!introOn||soundOn!==true||!stack.length) return;
