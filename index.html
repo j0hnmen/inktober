@@ -1866,9 +1866,6 @@ function hcWave(){ if(reduce||!vOpen||HC.on||vZooming||M.drag||M.hold||V.el.clas
   const hs=!!(fan&&fan.spread), dy=hs?-8:0, r=V.stage.getBoundingClientRect(), L=r.left+r.width/2-vW/2, T=r.top+r.height/2-vH/2+dy;
   let cx=.5, cy=.5; if(!COARSE){ const q=window.curSwirl&&curSwirl(); if(!q) return; cx=(q[0]-L)/vW; cy=(q[1]-T)/vH; if(cx<0||cx>1||cy<0||cy>1) return; }   /* mouse: only under the swirl */
   pressRun("wave",cx,cy); }
-/* held for the references: the paper gives a little more every moment under the finger / the cursor (single sheets only) */
-function pressHold(x,y){ if(reduce||fan||!vOpen) return; const r=V.card.getBoundingClientRect(); if(!r.width) return;
-  pressRun("hold",Math.min(.9,Math.max(.1,(x-r.left)/r.width)),Math.min(.9,Math.max(.1,(y-r.top)/r.height))); }
 function shineMask(){ return V.el.classList.contains("hero") ? "url(pages/21c-wall.webp)" : `url(pages/${vDay}-torn${COARSE?"-m":""}.webp)`; }
 function hcShine(){ let e=document.getElementById("vshine"); if(!e){ e=document.createElement("div"); e.id="vshine"; e.className="vshine"; V.stage.appendChild(e); } return e; }
 function hcDraw(){ if(!HC.sw){ const e=hcShine(), k=HC.k;
@@ -1882,7 +1879,7 @@ function hcDraw(){ if(!HC.sw){ const e=hcShine(), k=HC.k;
   const h=hcEl(), k=HC.k, g=Math.pow(k,0.8);   /* shows early and keeps swelling to the very end */
   h.style.width=(vW*1.5).toFixed(0)+"px"; h.style.height=(vH*1.4).toFixed(0)+"px";
   h.style.transform=`translate3d(${HC.x.toFixed(1)}px,${HC.y.toFixed(1)}px,0) translate(-50%,-50%) scale(${(0.12+0.88*g).toFixed(3)})`; h.style.opacity=(Math.min(1,k*1.8)*0.62).toFixed(3); }
-function hcStart(x,y,done){ const px=x, py=y; { const r=V.stage.getBoundingClientRect(); x=r.left+r.width/2; y=r.top+r.height/2; } HC.x=x; HC.y=y; HC.done=done; HC.on=true; pressHold(px,py); HC.t0=performance.now()-HC.k*1700; cancelAnimationFrame(HC.raf);
+function hcStart(x,y,done){ { const r=V.stage.getBoundingClientRect(); x=r.left+r.width/2; y=r.top+r.height/2; } HC.x=x; HC.y=y; HC.done=done; HC.on=true; HC.t0=performance.now()-HC.k*1700; cancelAnimationFrame(HC.raf);
   const f=now=>{ if(!HC.on) return; const u=Math.min(1,(now-HC.t0)/1700); HC.k=u; hcDraw();
     if(u<1){ HC.raf=requestAnimationFrame(f); return; }
     HC.on=false; HC.sw=true; const ok=HC.done&&HC.done(); if(!ok) HC.sw=false; HC.done=null; hcFade(ok?380:220); };
