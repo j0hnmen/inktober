@@ -580,7 +580,7 @@ html.mcur,html.mcur *,html.mcur *::before,html.mcur *::after{cursor:none !import
 .cur.on{opacity:1}
 html.vzoomed .cur{opacity:0 !important;transition:opacity .15s ease}
 .room.zn .slot,.room.zn .slot img{transition:none !important}   /* the gallery re-laid out under a pinch: at once, the wall itself eases */   /* zooming into a drawing: the hand goes, the drawing stays clear */
-.cur i{position:absolute;left:0;top:0;width:64px;height:64px;background:url(pages/cur.webp) 0 0/640px 64px no-repeat;opacity:0;transition:opacity .14s ease}
+.cur i{position:absolute;left:0;top:0;width:64px;height:64px;background:url(pages/cur.webp?v=3) 0 0/640px 64px no-repeat;opacity:0;transition:opacity .14s ease}
 .cur i.on{opacity:1}
 .cur i{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4)) drop-shadow(0 2px 5px rgba(0,0,0,.22))}
 .cur i{scale:var(--fx,1) var(--fy,1)}   /* the pinch on Dumb's corners: mirrored to face the corner it holds (drawn for the top right) */   /* a soft shadow under the hand, as under a system cursor */
@@ -1573,7 +1573,7 @@ function makeCard(el, sh){
     const m=reduce?0:C.amp;
     const fx=Math.sin(t*0.42)*2*m, fy=Math.sin(t*0.33+1.3)*2.8*m, fz=Math.sin(t*0.23+.7)*0.4*m, bob=Math.sin(t*0.6)*5*m;
     const RY=C.ry+C.ty+fy, RX=C.rx+C.tx+fx;
-    el.style.transform=(C===window.__M&&HC.k>0.001?`scale(${(1+0.07*HC.k).toFixed(4)}) `:"")+(C===window.__M&&SWP.on?`translate(${SWP.dx.toFixed(1)}px,${(SWP.dy||0).toFixed(1)}px) scale(${SWP.ds.toFixed(4)}) `:"")+`translateY(${bob}px) rotateZ(${C.rz||0}deg) rotateX(${RX}deg) rotateY(${RY}deg) rotateZ(${fz}deg)`;
+    el.style.transform=(C===window.__M&&HC.k>0.001?`scale(${(1+0.07*(1-Math.pow(1-HC.k,1.8))).toFixed(4)}) `:"")+(C===window.__M&&SWP.on?`translate(${SWP.dx.toFixed(1)}px,${(SWP.dy||0).toFixed(1)}px) scale(${SWP.ds.toFixed(4)}) `:"")+`translateY(${bob}px) rotateZ(${C.rz||0}deg) rotateX(${RX}deg) rotateY(${RY}deg) rotateZ(${fz}deg)`;
     const dyn=Math.max(-6,Math.min(6,-C.vy*1.2));
     for(let i=1;i<VHALF;i++){
       const rip=((reduce||C.hold)?0:Math.sin(t*0.8-i*0.6)*0.7+Math.sin(t*0.5+i*0.45)*0.45)*(C===window.__M?1-PF:1);   /* the press on top: flat paper */   /* held for the making of: flat, so the photo has no seams */
@@ -1777,7 +1777,7 @@ function swapRender(){
   if(HC.sw){ const sh=hcShine();   /* the glint ends exactly as the drawing passes behind the reference */
     if(u>=0.5||!V.el.classList.contains("mking")){ sh.style.opacity="0"; if(u>=0.5) HC.sw=false; }
     else { sh.style.backgroundPosition=shinePos(1); sh.style.opacity="0";
-      sh.style.transform=`scale(${(1+0.07*HC.k).toFixed(4)}) translate(${SWP.dx.toFixed(1)}px,${(SWP.dy||0).toFixed(1)}px) scale(${SWP.ds.toFixed(4)})`; } }
+      sh.style.transform=`scale(${(1+0.07*(1-Math.pow(1-HC.k,1.8))).toFixed(4)}) translate(${SWP.dx.toFixed(1)}px,${(SWP.dy||0).toFixed(1)}px) scale(${SWP.ds.toFixed(4)})`; } }
   if(fan){ fan.box.style.transform= u>0.001 ? `translate(${SWP.dx.toFixed(1)}px,${(SWP.dy||0).toFixed(1)}px) scale(${SWP.ds.toFixed(4)})` : ""; fan.box.style.filter=V.card.style.filter; }
   vMk.style.transform=`translate(${px.toFixed(1)}px,${py.toFixed(1)}px) scale(${ps.toFixed(4)})`;
   vMk.style.opacity= MKSRC==="mo" ? (u>0.001?"1":"0") : Math.min(1,Math.max(0,(u-0.04)/0.36)).toFixed(3);   /* a fade from 0 to 100% as it comes round: never seen poking out from behind the drawing */
@@ -1880,7 +1880,7 @@ function hcDraw(){ if(!HC.sw){ const e=hcShine(), k=HC.k;
       { const u=shineMask(); if(e._d!==u){ e._d=u; e.style.webkitMaskImage=e.style.maskImage=u; } }
       if(fan&&fan.spread){ e.style.opacity="0"; return; }   /* Hero spread apart: the glint would not sit on the sheets */
       e.style.width=vW+"px"; e.style.height=vH+"px"; e.style.marginLeft=(-vW/2)+"px"; e.style.marginTop=(-vH/2)+"px";
-      e.style.transform=`scale(${(1+0.07*k).toFixed(4)})`;
+      e.style.transform=`scale(${(1+0.07*(1-Math.pow(1-k,1.8))).toFixed(4)})`;
       e.style.backgroundPosition=shinePos(k);   /* bottom left to top right; it finishes as the drawing goes behind (swapRender) */
       e.style.opacity= HC.on ? Math.min(1,k*5).toFixed(3) : k.toFixed(3); } }
   const h=hcEl(), k=HC.k, g=Math.pow(k,0.8);   /* shows early and keeps swelling to the very end */
