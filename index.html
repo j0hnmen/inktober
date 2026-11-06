@@ -580,16 +580,15 @@ html.mcur,html.mcur *,html.mcur *::before,html.mcur *::after{cursor:none !import
 .cur.on{opacity:1}
 html.vzoomed .cur{opacity:0 !important;transition:opacity .15s ease}
 .room.zn .slot,.room.zn .slot img{transition:none !important}   /* the gallery re-laid out under a pinch: at once, the wall itself eases */   /* zooming into a drawing: the hand goes, the drawing stays clear */
-.cur i{position:absolute;left:0;top:0;width:64px;height:64px;background:url(pages/cur.webp?v=3) 0 0/640px 64px no-repeat;opacity:0;transition:opacity .14s ease}
+.cur i{position:absolute;left:0;top:0;width:64px;height:64px;background:url(pages/cur.webp) 0 0/640px 64px no-repeat;opacity:0;transition:opacity .14s ease}
 .cur i.on{opacity:1}
 .cur i{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4)) drop-shadow(0 2px 5px rgba(0,0,0,.22))}
 .cur i{scale:var(--fx,1) var(--fy,1)}   /* the pinch on Dumb's corners: mirrored to face the corner it holds (drawn for the top right) */   /* a soft shadow under the hand, as under a system cursor */
 .cur b{position:absolute;left:0;top:0;width:34px;height:34px;translate:-17px -17px;border-radius:50%;pointer-events:none;opacity:0;
-  box-shadow:0 0 0 .8px rgba(34,32,28,.36),0 0 0 1.5px rgba(255,255,255,.3),0 0 6px 1px rgba(255,255,255,.14)}   /* a ring of graphite with a light edge: it reads on the paper and on the dark */
+  box-shadow:0 0 0 1.2px rgba(34,32,28,.42),0 0 0 2.4px rgba(255,255,255,.35),0 0 10px 2px rgba(255,255,255,.18)}   /* a ring of graphite with a light edge: it reads on the paper and on the dark */
 .cur::before{content:"";position:absolute;left:-32px;top:-32px;width:64px;height:64px;scale:1.7;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .3s ease;
   background:radial-gradient(circle,rgba(255,255,255,.3) 0%,rgba(255,255,255,.16) 28%,rgba(255,255,255,.05) 52%,rgba(255,255,255,0) 70%)}   /* a light, diffuse white glow under the swirl */
 .cur.sw::before{opacity:1}
-.cur.sw i{filter:drop-shadow(0 0 1.4px rgba(0,0,0,.65)) drop-shadow(0 0 5px rgba(0,0,0,.35))}   /* the swirl spins, so its dark shadow sits all round it (an offset one would orbit); it reads over the white glow */
 .cur.sw.pulse b{animation:cwave 2s cubic-bezier(.15,.6,.3,1) 1 both} .cur.sw.pulse b+b{animation-delay:.3s}   /* the swirl's rings go out once, with each press in the drawing (curPulse) */
 .cur.sw b+b{animation-delay:.3s}
 @keyframes cwave{0%{transform:scale(1);opacity:0}8%{opacity:.55}65%{transform:scale(2.3);opacity:0}100%{transform:scale(2.3);opacity:0}}   /* the swirl sends out a wave, like the sound button */
@@ -1842,7 +1841,7 @@ function pressFlatBack(){ cancelAnimationFrame(PFr); let l=performance.now(); co
 function pressRun(mode,cx,cy,under){ const P=pressGL(); if(!P) return; const src=pressSrc(), go=()=>{
     if(!vOpen||(mode==="wave"&&(HC.on||M.drag||M.hold))) return;
     const {cv,gl}=P, d=Math.min(2,devicePixelRatio||1), hs=!!(fan&&fan.spread), dy=hs?-8:0;
-    P.mode=mode; P.cx=cx; P.cy=cy; P.under=!!under; P.t0=-1; P.end=0;
+    P.mode=mode; P.cx=cx; P.cy=cy; P.under=!!under; P.t0=-1; P.km=0; P.end=0;
     if(cv.width!==Math.round(vW*d)||cv.height!==Math.round(vH*d)){ cv.width=Math.round(vW*d); cv.height=Math.round(vH*d); }
     const host=fan?V.stage:V.card;   /* a single sheet: the canvas lives inside the card itself, a hair in front of its paper, so it moves with it (no copying, nothing for Safari to sort) */
     cv.style.cssText=fan?`position:absolute;left:50%;top:50%;width:${vW}px;height:${vH}px;margin:${-vH/2+dy}px 0 0 ${-vW/2}px;z-index:5;pointer-events:none;visibility:hidden`
@@ -1856,7 +1855,7 @@ function pressRun(mode,cx,cy,under){ const P=pressGL(); if(!P) return; const src
       if(!fan&&PF<1){ P.raf=requestAnimationFrame(f); return; }
       if(P.t0<0){ P.t0=now; if(P.under&&window.curPulse){ const m=P.mode; setTimeout(()=>{ if(P.mode===m&&P.under) curPulse(); },350); } }   /* the swirl's rings: only for a press that starts under it, a beat after it (never without it) */ cv.style.visibility="visible";
       const t=(now-P.t0)/1000; if(t>2.6){ P.raf=0; P.mode=""; cv.remove(); pressFlatBack(); return; }
-      gl.uniform2f(P.c,P.cx,P.cy); gl.uniform1f(P.t,t); gl.uniform1f(P.hk,0.); gl.uniform1f(P.sz,P.mode==="hold"?1.6:1.);   /* held: a bigger press */
+      gl.uniform2f(P.c,P.cx,P.cy); gl.uniform1f(P.t,t); gl.uniform1f(P.hk,0.); if(P.mode==="hold") P.km=Math.max(P.km||0,HC.k); gl.uniform1f(P.sz,P.mode==="hold"?1.+.6*Math.pow(P.km,.6):1.);   /* held: the press grows with the hold (a plain click stays the usual size) */
       gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); P.raf=requestAnimationFrame(f); };
     P.raf=requestAnimationFrame(f); };
   const d=Math.min(2,devicePixelRatio||1), W=Math.round(vW*d), H=Math.round(vH*d), key=src+"@"+W;
