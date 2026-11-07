@@ -1024,7 +1024,7 @@ build();
 
 /* Tearing */
 let cur=null;
-const RIP=300; const TEAR={"10":360,"13":6,"30":400,"06":560};   /* Mystical a bit harder, Flimsy almost nothing, Cookie very hard */            /* pull distance (page units) that breaks the holes */ if(COARSE) TEAR["06"]=430;   /* phones: Ogre lets go sooner */
+const RIP=300; const TEAR={"10":360,"13":6,"30":400,"06":440};   /* Mystical a bit harder, Flimsy almost nothing, Cookie very hard */            /* pull distance (page units) that breaks the holes */ if(COARSE) TEAR["06"]=340;   /* phones: Ogre lets go sooner */
 book.addEventListener("pointerdown",e=>{
   if(introOn) return;
   if(COARSE && pagesEl.querySelectorAll(".page.flyer,.glite.mf").length>=2) return;   /* phones: never more than 2 torn sheets in the air (memory) */
@@ -1134,7 +1134,7 @@ function tick(){
     /* the sheet resists: it only gives a few units while the holes hold */
     const away=Math.max(0,lft?-dx:dx), pull=Math.hypot(away, dy*0.6); c.ogk=p.dataset.day==="06"&&!c.gal&&!c.auto;
     if(p.dataset.day==="06" && !c.gal && !c.auto){ const M=COARSE?30:110, ox=Math.min(away*(COARSE?0.1:0.2),M), t=ox/M; const u=ox/(M*2.4); ogSet(true, ox, COARSE?-32*4*u*(1-u):14*t*t); }   /* phones: a wide parabola (twice as long as the pull can go): it rises gradually; let go, it comes back */   /* the notebook always follows one path, whatever the hand's height: to the right, centred, on a slight arc */   /* Ogre holds on hard: the notebook is dragged far, then the sheet lets go at once */   /* phones: the notebook goes a little further */
-    const give=c.ogk?(COARSE?30:50)*(1-Math.exp(-pull/300)):(myst?5:11)*(1-Math.exp(-pull/170));   /* the sheet lives under the hand; the wire holds it by the holes (stretchHoles spreads the give over the margin) */   /* the wire holds the paper by the holes: the sheet gives, and its holes stretch into ovals (stretchHoles) */
+    const give=c.ogk?(COARSE?22:38)*(1-Math.exp(-pull/300)):11*(1-Math.exp(-pull/170));   /* the sheet lives under the hand; the wire holds it by the holes (stretchHoles spreads the give over the margin) */   /* the wire holds the paper by the holes: the sheet gives, and its holes stretch into ovals (stretchHoles) */
     const n=pull>0?1/pull:0;
     c.ox=(lft?-1:1)*away*n*give; c.oy=dy*0.6*n*give*0.6;
     if(c.shake){ c.ox+=(Math.random()-.5)*c.shake; c.oy+=(Math.random()-.5)*c.shake*0.7; }   /* a thick block fights the rings */
@@ -1184,7 +1184,7 @@ function tick(){
   { /* the sheet lives under the hand: the holes stretch a little (subtle ovals, not on Mystical), and the rings give the rest,
        flexing towards the pull so the wire stays in the holes */
     const on=c.state==="pull"||c.state==="back", g=on?Math.max(0,c.ox):0;
-    const dh=myst?0:(c.ogk?g:Math.min(g,4.5));   /* Ogre: the sheet gives much more, all of it into long ovals (the paper by the spiral never moves) */
+    const dh=c.ogk?g:Math.min(g,4.5);   /* Ogre: the sheet gives much more, all of it into long ovals (the paper by the spiral never moves) */
     stretchHoles(p, dh); }   /* the paper left of the holes stays exactly where it is: the give goes into the ovals, nothing moves left */
   if(c.lab){ const mk=c.mini?1-c.mini:0, G=c.gv||[330,0], [lx,ly]=dScreen(c.ox-c.l0.x-(330-G[0])*mk, c.oy-c.l0.y-(518-G[1])*mk);   /* Miniature: the label follows the shrinking sheet, same gap */ c.lab.style.transform=`translate(-50%,0) translate(${lx}px, ${ly}px) rotate(${c.rot-c.l0.r}deg)`; }
   /* shadow: grows in as the sheet lifts */
