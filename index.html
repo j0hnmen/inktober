@@ -1144,7 +1144,7 @@ function tick(){
   }
   if(c.state==="rip"){
     /* the holes give way from top to bottom */
-    const k=reduce?1:Math.min(1,(performance.now()-c.t0)/((c.ogk?90:240)/(c.spd||1)));   /* Ogre: the holes give way at once */
+    const k=reduce?1:Math.min(1,(performance.now()-c.t0)/((c.ogk?90:150)/(c.spd||1)));   /* Ogre: the holes give way at once */
     c.rip=k; if(p.dataset.day==="03" && !c.gal) c.mini=1-0.24*k;   /* Miniature: as it comes off, it looks a touch smaller */
     setRip(p,k);
     c.ox=c.base.x+(dx-c.base.dx)*k+(c.ogr?c.ogr.x-OG.x:0); c.oy=c.base.y+(dy-c.base.dy)*k+(c.ogr?c.ogr.y-OG.y:0); c.rot=c.rot+(2.5-c.rot)*0.15;   /* (Ogre: the sheet stays under the hand while the notebook goes back) */
