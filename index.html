@@ -1458,7 +1458,7 @@ function mediaCard(day){ mediaCard.art=mediaCard.art||{}; const ms=navigator.med
 setInterval(()=>{ const m=unlock.media; if(!m) return;
   const live=!!playing || (actx && actx.currentTime<quietAt) || !!wantDay || (introOn && soundOn===true);   /* music on its way (intro, a clip loading) counts as live: releasing the keeper then left the first clip silent on iPhone */
   if(live){ if(m.paused && !document.hidden){ const pr=m.play(); if(pr&&pr.catch) pr.catch(()=>{}); } if(playing && mediaCard.day!==playing.day){ mediaCard.day=playing.day; mediaCard(playing.day); } }
-  else keeperRelease();
+  /* idle with the page on screen: the keeper keeps running (as it always did) — only leaving the page releases it */
 },700);
 /* idle: pausing is not enough, iOS keeps the "now playing" card as long as the element holds a source. Drop the source;
    the next tap (unlock) re-arms the same element inside the gesture. */
