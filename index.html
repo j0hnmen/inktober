@@ -1442,12 +1442,27 @@ function fadeOutCurrent(){
   try{ src.stop(t+OUT+0.05); }catch(_){}
   playing=null;
 }
-let wantVol=1, musicEarly=false, musicLand=0, musicTapAt=0;   /* musicLand: audio-clock time when the first drawing lands (the way in with sound) */
+let wantVol=1, musicEarly=false, musicLand=0, musicTapAt=0;
+/* iPhone lock screen / Safari speaker: the silent <audio> that keeps the output open runs only while a clip plays, and the
+   "now playing" card it brings up names the drawing and its track (artwork: the drawing), instead of a 1 s nothing titled after the page. */
+function mediaCard(day){ const ms=navigator.mediaSession; if(!ms) return; try{
+  if(!day){ ms.metadata=null; ms.playbackState="none"; return; }
+  const d=day==="21"?"21c":day, song=SONGS[day]||SONGS[d]||["",""];
+  ms.metadata=new MediaMetadata({title:`${parseInt(day,10)}. ${NAMES[d]||NAMES[day]||""}`, artist:song[0], album:"Carnet Inktober — Nabil Amara", artwork:[{src:`${location.origin}${location.pathname.replace(/[^/]*$/,"")}pages/${d}-tthumb.webp`,sizes:"390x518",type:"image/webp"}]});
+  ms.playbackState="playing"; for(const k of ["previoustrack","nexttrack","seekbackward","seekforward","seekto"]){ try{ ms.setActionHandler(k,null); }catch(_){} }
+}catch(_){} }
+setInterval(()=>{ const m=unlock.media; if(!m) return;
+  const live=!!playing || (actx && actx.currentTime<quietAt);
+  if(live){ if(m.paused && !document.hidden){ const pr=m.play(); if(pr&&pr.catch) pr.catch(()=>{}); } if(playing && mediaCard.day!==playing.day){ mediaCard.day=playing.day; mediaCard(playing.day); } }
+  else if(!m.paused){ m.pause(); mediaCard.day=null; mediaCard(null); }
+},700);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) return; const m=unlock.media; if(m&&!m.paused) m.pause(); if(actx && playing) fadeOutCurrent(); mediaCard.day=null; mediaCard(null); });   /* the tab goes away: the music stops, the lock screen shows nothing of ours */   /* musicLand: audio-clock time when the first drawing lands (the way in with sound) */
 function music(day,vol){
   if(day && day.startsWith("21")) day="21";   /* Hero's three sheets share one clip: it plays on across them, no cut */
   if(day!==stickDay) stickDay=null;   /* another drawing's music: the gallery loop is over */
   vol= vol===undefined ? 1 : vol;
   wantDay=day; wantVol=vol;
+  if(unlock.media && unlock.media.paused && !document.hidden){ try{ const pr=unlock.media.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(_){} }   /* the silent keeper runs again before the clip starts */
   if(soundOn!==true){ mutedTrack(day); return; }
   if(introOn && !musicEarly) return;                    /* no music while the sheets fly in, unless sound was chosen at the way in */
   if(!actx || actx.state!=="running") return;          /* not unlocked yet: the first interaction will start it */
