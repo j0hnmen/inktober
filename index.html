@@ -1456,7 +1456,7 @@ function mediaCard(day){ mediaCard.art=mediaCard.art||{}; const ms=navigator.med
   ms.playbackState="playing"; for(const k of ["previoustrack","nexttrack","seekbackward","seekforward","seekto"]){ try{ ms.setActionHandler(k,null); }catch(_){} }
 }catch(_){} }
 setInterval(()=>{ const m=unlock.media; if(!m) return;
-  const live=!!playing || (actx && actx.currentTime<quietAt);
+  const live=!!playing || (actx && actx.currentTime<quietAt) || !!wantDay || (introOn && soundOn===true);   /* music on its way (intro, a clip loading) counts as live: releasing the keeper then left the first clip silent on iPhone */
   if(live){ if(m.paused && !document.hidden){ const pr=m.play(); if(pr&&pr.catch) pr.catch(()=>{}); } if(playing && mediaCard.day!==playing.day){ mediaCard.day=playing.day; mediaCard(playing.day); } }
   else keeperRelease();
 },700);
