@@ -1445,7 +1445,8 @@ function fadeOutCurrent(){
 let wantVol=1, musicEarly=false, musicLand=0, musicTapAt=0;
 /* iPhone lock screen / Safari speaker: the silent <audio> that keeps the output open runs only while a clip plays, and the
    "now playing" card it brings up names the drawing and its track (artwork: the drawing), instead of a 1 s nothing titled after the page. */
-function mediaCard(day){ mediaCard.art=mediaCard.art||{}; const ms=navigator.mediaSession; if(!ms) return; try{
+function mediaCard(day){ return;   /* the lock-screen card is assumed: iOS shows the page itself (Inktober 2026 Nabil Amara), no per-drawing metadata */
+  mediaCard.art=mediaCard.art||{}; const ms=navigator.mediaSession; if(!ms) return; try{
   if(!day){ ms.metadata=null; ms.playbackState="none"; return; }
   const d=day==="21"?"21c":day, song=SONGS[day]||SONGS[d]||["",""];
   ms.metadata=new MediaMetadata({title:`${parseInt(day,10)}. ${NAMES[d]||NAMES[day]||""}`, artist:song[0], album:"Carnet Inktober — Nabil Amara", artwork:mediaCard.art[d]?[{src:mediaCard.art[d],sizes:"512x512",type:"image/jpeg"}]:[]});
