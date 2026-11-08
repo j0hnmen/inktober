@@ -1465,7 +1465,16 @@ setInterval(()=>{ const m=unlock.media; if(!m) return;
 function keeperRelease(){ const m=unlock.media||unlock.m; mediaCard.day=null; mediaCard(null); if(!m) return;
   try{ m.pause(); if(m.getAttribute("src")){ m._src=m.getAttribute("src"); m.removeAttribute("src"); m.load(); } }catch(_){}
   unlock.media=null; }
-document.addEventListener("visibilitychange",()=>{ if(!document.hidden) return; if(actx && playing) fadeOutCurrent(); keeperRelease(); });   /* the tab goes away: the music stops, the lock screen shows nothing of ours */   /* musicLand: audio-clock time when the first drawing lands (the way in with sound) */
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) return; keeperRelease(); audioReset(); });
+/* leaving Safari / locking: iOS "interrupts" the audio context and a resume asked later can stay pending for ever (no music
+   any more until a reload). So the context is closed on the way out; on return the first tap builds a fresh one inside the
+   gesture, and the music of the drawing on screen (wantDay) comes back. */
+function audioReset(){ if(!actx) return; const old=actx;
+  try{ if(playing){ try{ playing.src.stop(); }catch(_){} } }catch(_){}
+  playing=null; quietAt=0; actx=null; unlock.primed=false;
+  for(const k in bufs) delete bufs[k];   /* decodes in flight on the old context would resolve to nothing: fetch again (from cache) */
+  try{ hideTrack(); }catch(_){}
+  try{ const pr=old.close(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(_){} }   /* the tab goes away: the music stops, the lock screen shows nothing of ours */   /* musicLand: audio-clock time when the first drawing lands (the way in with sound) */
 function music(day,vol){
   if(day && day.startsWith("21")) day="21";   /* Hero's three sheets share one clip: it plays on across them, no cut */
   if(day!==stickDay) stickDay=null;   /* another drawing's music: the gallery loop is over */
@@ -1484,7 +1493,7 @@ function music(day,vol){
   if(!TRACKS[day]) return;
   const inKey= introOn&&musicLand&&TRACKS[day+"in"] ? day+"in" : day;
   loadBuf(inKey).then(buf=>{
-    if(!buf || wantDay!==day || (playing&&playing.day===day)) return;
+    if(!buf || !actx || actx.state==="closed" || wantDay!==day || (playing&&playing.day===day)) return;
     const t=Math.max(actx.currentTime, quietAt-0.3), src=actx.createBufferSource(), g=actx.createGain();   /* a slight overlap: the next clip comes in during the last 0.3 s of the previous one */
     src.buffer=buf; src.connect(g); g.connect(actx.master);
     const V0=wantVol;
@@ -1519,7 +1528,7 @@ function keepOn(me){
   me.end=clipEnd; me.stopAt=clipEnd; trackTimers.forEach(clearTimeout); trackTimers=[];
   const key=me.day+"t"; if(!TRACKS[key] || me.tail) return;
   me.tail={};   /* claimed at once: the clip may end while the tail decodes */
-  loadBuf(key).then(tb=>{ if(!tb || playing!==me || !stickDay){ if(playing===me && !me.tail.src){ me.tail=null; if(actx.currentTime>me.end) playing=null; } return; }
+  loadBuf(key).then(tb=>{ if(!actx) return; if(!tb || playing!==me || !stickDay){ if(playing===me && !me.tail.src){ me.tail=null; if(actx.currentTime>me.end) playing=null; } return; }
     const now=actx.currentTime, at=clipEnd-0.5, s2=actx.createBufferSource(), g2=actx.createGain(); s2.buffer=tb; s2.connect(g2); g2.connect(actx.master);
     g2.gain.setValueAtTime(V,Math.max(now,at));
     if(at>=now) s2.start(at); else { const o=now-at; if(o>=tb.duration) return; s2.start(now,o); }
